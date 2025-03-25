@@ -1,5 +1,5 @@
 INCLUDE krsv2.inc
-
+  
 data segment
     ;================= MENU =======================
     menu_line1 db "Men", 0A3h, " de Cadenas", 0
@@ -39,11 +39,15 @@ data segment
 
     ; Message for unavailable option
     not_available_msg db "Opci", 0A2h, "n no disponible", 0
+    
+    
+    ;===================== GENERAL MESSAGES ========================
+    pressenter_msg db "Presiona enter para continuar", 0
 data ends
 
 code segment 
     .386
-    start:
+    start: 
         assume cs:code, ds:data
         mov ax, data
         mov ds, ax
@@ -59,31 +63,31 @@ code segment
         ; Check the input
         mov al, input_buffer[0]
         
-        ; Check for ESC (ASCII 27)
+        ; Check for ESC (ASCII 27) 
         cmp al, 27
         je @EXIT
         
         ; Clear only the right side of the screen (columns 26 to 79)
-        Clear_Rectangle 0, 26, 54, 23  ; Width is 54 (80-26) to cover right side
+        Clear_Rectangle 0, 28, 54, 23  ; Width is 54 (80-26) to cover right side
         
         ; Check for option '1' (Palindrome Check)
         cmp al, '1'
         jne @CHECK_OPTION_2
-        Draw_PalindromeCheck 0, 26     ; Draw on the right side
+        Draw_PalindromeCheck 0, 28     ; Draw on the right side
         jmp @MAIN
         
 @CHECK_OPTION_2:
         ; Check for option '2' (Vowel Count)
         cmp al, '2'
         jne @CHECK_OPTION_3
-        Draw_VowelCount 0, 26
+        Draw_VowelCount 0, 28
         jmp @MAIN
         
 @CHECK_OPTION_3:
         ; Check for option '3' (Substring Extraction)
         cmp al, '3'
         jne @CHECK_OPTION_4
-        Draw_SubstringInput 0, 26
+        Draw_SubstringInput 0, 28
         jmp @MAIN
         
 @CHECK_OPTION_4:

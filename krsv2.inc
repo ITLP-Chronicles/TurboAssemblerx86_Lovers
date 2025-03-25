@@ -805,6 +805,7 @@ Draw_PalindromeCheck macro rowIndex, columnIndex
     Console_WriteTextWith0 palindrome_yes
     
 @END:
+    Console_ReadTextWith0 palindrome_input, 1
     pop dx
     pop cx
     pop bx
@@ -922,6 +923,7 @@ Draw_VowelCount macro rowIndex, columnIndex
     add bl, '0' ; Convert to ASCII digit (e.g., 4 -> '4')
     Console_WriteChar bl
     Console_WriteTextWith0 vowel_line3
+    Console_ReadTextWith0 vowel_input, 1
     
 @END:
     pop dx
@@ -1146,6 +1148,7 @@ Draw_SubstringInput macro rowIndex, columnIndex
     Cursor_MoveTo ch, cl
     Console_WriteTextWith0 substring_result
     
+    Console_ReadTextWith0 end_input, 1
 @END:
     pop di
     pop si
