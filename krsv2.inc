@@ -696,7 +696,19 @@ endm
 limpiarPartePantalla macro color, esqIzq, esqDer
     push ax
     push bh
+    push cx
+    push dx
+        
+    mov ax, 0600h
+    mov bh, color
+    mov cx, esqIzq
+    mov dx, esqDer
+    int 10h
     
+    pop dx
+    pop cx
+    pop bh
+    pop ax
 endm
 
 
@@ -737,9 +749,4 @@ CheckPalindrome macro palabra, esPalindromo
     fin_macro:
         popa   
 ENDM
-
-
-
-
-
 
