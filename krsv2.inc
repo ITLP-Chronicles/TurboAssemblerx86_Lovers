@@ -691,9 +691,68 @@ Draw_Menu macro rowIndex, columnIndex
     pop ax
 endm
 
+; Checks if a null-terminated string is a palindrome
+; @param stringWith0 | (bytes[]) | The null-terminated string to check
+; @returns al | 1 if palindrome, 0 if not palindrome
+; @Destructive | Modifies si, di, cx
+Is_Palindrome macro stringWith0
+    local find_length, compare_loop, is_palindrome, not_palindrome, end_check
+    
+    push bx
+    push cx
+    push si
+    push di
+    
+    ; Step 1: Find the length of the string (excluding the null terminator)
+    mov si, 0
+    mov cx, 0  ; cx will hold the length
+find_length:
+    cmp stringWith0[si], 0  ; Check for null terminator
+    je end_length
+    inc si
+    inc cx
+    jmp find_length
+end_length:
+    ; cx now holds the length of the string
+    ; If length is 0 or 1, it's a palindrome
+    cmp cx, 1
+    jbe is_palindrome  ; If length <= 1, it's a palindrome
+    
+    ; Step 2: Set up pointers for comparison
+    mov si, 0  ; Start pointer (beginning of string)
+    mov di, cx ; End pointer (last character before null terminator)
+    dec di     ; Adjust di to point to the last character
+    
+    ; Step 3: Compare characters from start and end
+compare_loop:
+    cmp si, di  ; If pointers meet or cross, we're done
+    jge is_palindrome  ; If si >= di, all characters matched
+    
+    mov al, stringWith0[si]  ; Get character from start
+    mov bl, stringWith0[di]  ; Get character from end
+    cmp al, bl               ; Compare characters
+    jne not_palindrome       ; If they don't match, not a palindrome
+    
+    inc si  ; Move start pointer forward
+    dec di  ; Move end pointer backward
+    jmp compare_loop
+
+is_palindrome:
+    mov al, 1  ; Set return value to 1 (true)
+    jmp end_check
+
+not_palindrome:
+    mov al, 0  ; Set return value to 0 (false)
+
+end_check:
+    pop di
+    pop si
+    pop cx
+    pop bx
+endm
 
 Draw_PalindromeCheck macro rowIndex, columnIndex
-    local @END
+    local @END, @IS_PALINDROME, @NOT_PALINDROME
     push ax
     push bx
     push cx
@@ -727,19 +786,34 @@ Draw_PalindromeCheck macro rowIndex, columnIndex
     ; Line 3: Blank row (just increment ch)
     inc ch
     
-    ; Line 4: "S? es Pal?ndromo" (hardcoded for now)
+    ; Line 4: Check if the input is a palindrome and display result
     inc ch
     mov cl, columnIndex  ; Reset column to left padding
     add cl, 4
     Cursor_MoveTo ch, cl
-    Console_WriteTextWith0 palindrome_line3
     
+    ; Check if the input is a palindrome
+    Is_Palindrome palindrome_input
+    cmp al, 1
+    je @IS_PALINDROME
+    
+@NOT_PALINDROME:
+    Console_WriteTextWith0 palindrome_not
+    jmp @END
+
+@IS_PALINDROME:
+    Console_WriteTextWith0 palindrome_yes
+
 @END:
     pop dx
     pop cx
     pop bx
     pop ax
 endm
+
+
+
+
 
 
 
