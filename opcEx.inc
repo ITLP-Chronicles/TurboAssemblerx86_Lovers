@@ -1,41 +1,41 @@
-GUESS_NUMBER MACRO
-    LOCAL game_loop, win, too_high, too_low
+FACTORIAL_CALCULATOR MACRO number, buffer
+    LOCAL calculate_factorial, multiply_loop, end_macro, zero_factorial, invalid_input
 
-    ; Generar n?mero aleatorio (suponiendo una funci?n definida)
-    CALL generate_random_number  ; Devuelve el n?mero en EAX
-    MOV secret_number, EAX       ; Guardar el n?mero secreto
+    ; Cargar el n?mero en AX
+    MOV AX, number               ; El n?mero se pasa como par?metro
 
-    MOV attempts, 0              ; Inicializar contador de intentos
+    ; Validar que el n?mero sea no negativo
+    CMP AX, 0
+    JL invalid_input             ; Si es negativo, mostrar error
+    JE zero_factorial            ; Si es 0, factorial es 1
 
-game_loop:
-    ; Mostrar mensaje para adivinar
-    PRINT_STRING guess_prompt
+    ; Inicializar variables para el c?lculo
+    MOV CX, AX                   ; CX = number (contador para el bucle)
+    MOV AX, 1                    ; AX = 1 (acumulador del factorial)
 
-    ; Leer entrada del usuario
-    CALL read_integer            ; Devuelve la adivinanza en EAX
-    MOV guess, EAX               ; Guardar la adivinanza
+calculate_factorial:
+    MUL CX                       ; AX = AX * CX
+    LOOP calculate_factorial     ; Decrementa CX y repite hasta que CX = 0
 
-    ; Incrementar contador de intentos
-    INC attempts
+    MOV [buffer], AX             ; Almacenar el resultado en la direcci?n del buffer
 
-    ; Comparar adivinanza con el n?mero secreto
-    MOV EAX, guess
-    CMP EAX, secret_number
-    JE win                       ; Si igual, gana
-    JG too_high                  ; Si mayor, demasiado alto
-    JL too_low                   ; Si menor, demasiado bajo
+    PRINT_STRING result_msg      ; Imprimir mensaje "Resultado: "
+    MOV AX, [buffer]             ; Cargar el resultado en AX para imprimirlo
+    CALL print_integer           ; Llamar a subrutina para imprimir el n?mero
+    JMP end_macro
 
-too_high:
-    PRINT_STRING too_high_msg    ; Mensaje "demasiado alto"
-    JMP game_loop                ; Volver al bucle
+zero_factorial:
+    ; Si el n?mero es 0, factorial es 1
+    MOV AX, 1
+    MOV [buffer], AX             ; Guardar 1 en el buffer
+    PRINT_STRING result_msg      ; Imprimir mensaje "Resultado: "
+    CALL print_integer           ; Imprimir el resultado (1)
+    JMP end_macro
 
-too_low:
-    PRINT_STRING too_low_msg     ; Mensaje "demasiado bajo"
-    JMP game_loop                ; Volver al bucle
+invalid_input:
+    ; Si el n?mero es negativo, mostrar mensaje de error
+    PRINT_STRING error_msg       ; Imprimir mensaje "Error: n?mero inv?lido"
 
-win:
-    PRINT_STRING win_msg         ; Mensaje de victoria
-    PRINT_STRING attempts_msg    ; Mostrar intentos
-    MOV EAX, attempts
-    CALL print_integer           ; Imprimir n?mero de intentos
+end_macro:
 ENDM
+

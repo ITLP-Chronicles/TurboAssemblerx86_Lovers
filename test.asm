@@ -6,7 +6,7 @@ data segment
     menu_line2 db "1. ", 0A8h, "Es pal", 0A1h, "ndromo?", 0
     menu_line3 db "2. N", 0A3h, "mero de vocales", 0
     menu_line4 db "3. Obtener subcadena", 0
-    menu_line5 db "4. ?", 0
+    menu_line5 db "4. Elevar a una potencia", 0
     menu_line6 db "<ESC> Para Salir", 0
     input_prompt db "Selecci", "o" ,"n: ", 0
 
@@ -37,6 +37,17 @@ data segment
     end_input db 3 dup(0)         ; Reserve 3 bytes for end index (2 chars + null)
     substring_result db 16 dup(0) ; Reserve 16 bytes for the substring
 
+    ;================= Pow ==========================
+    pow_line1 db "Calculadora de potencia", 0
+    pow_line2 db "Numero: ", 0
+    pow_line3 db "Potencia: ", 0
+    pow_numeroString db 1 dup(0)
+    pow_potenciaString db 1 dup(0)
+    pow_numero dw 1 dup(0)
+    pow_potencia dw 1 dup(0)
+    pow_resultText db "Resultado: ", 0
+    pow_result dw 6 dup(0)   
+    
     ; Message for unavailable option
     not_available_msg db "Opci", 0A2h, "n no disponible", 0
     
@@ -58,7 +69,7 @@ code segment
         Cursor_MoveTo 10, 1  ; Position cursor for input prompt
         
         ; Clear the input area to remove the selection
-        Clear_Rectangle 10, 1, 19, 1  ; Clear the input prompt and input
+        Clear_Rectangle 5, 5, 18, 1  ; Clear the input prompt and input
         
         ; Check the input
         mov al, input_buffer[0]
@@ -94,8 +105,7 @@ code segment
         ; Check for option '4' (Not available)
         cmp al, '4'
         jne @MAIN  ; If not '4', loop back to menu
-        Cursor_MoveTo 12, 1  ; Position for message
-        Console_WriteTextWith0 not_available_msg
+        Draw_PowerCalculator 0, 28
         jmp @MAIN
         
 @EXIT:

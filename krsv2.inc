@@ -1166,20 +1166,13 @@ LOCAL @CLEAR_ROW, @CLEAR_COL
     push cx
     push dx
     
-    mov ch, rowIndex
-    mov cl, columnIndex
-    mov bl, height
-@CLEAR_ROW:
-    Cursor_MoveTo ch, cl
-    mov dl, width
-    mov al, ' '  ; Space character to clear
-@CLEAR_COL:
-    Console_WriteChar al
-    dec dl
-    jnz @CLEAR_COL
-    inc ch
-    dec bl
-    jnz @CLEAR_ROW
+    mov ax,0600h    
+    mov bh,4Fh
+    mov cl,rowIndex
+    mov ch,columnIndex
+    mov dl,width
+    mov dh,height
+    int 10h
     
     pop dx
     pop cx
@@ -1187,3 +1180,64 @@ LOCAL @CLEAR_ROW, @CLEAR_COL
     pop ax
 endm
 
+
+
+
+
+Draw_PowerCalculator macro rowIndex, columnIndex
+    local @END
+    push ax
+    push bx
+    push cx
+    push dx
+    
+    ; Dibujar el rect?ngulo (ancho=24, alto=6)
+    Draw_Rectangle rowIndex, columnIndex, 24, 6
+    
+    ; Configurar la posici?n inicial dentro del rect?ngulo
+    mov ch, rowIndex
+    mov cl, columnIndex
+    inc ch          ; Bajar 1 fila para el margen superior
+    add cl, 4       ; A?adir 4 columnas de margen izquierdo
+    
+    ; L?nea 1: Mostrar el t?tulo
+    Cursor_MoveTo ch, cl
+    Console_WriteTextWith0 pow_line1
+    
+    ; L?nea 2: Solicitar la base
+    inc ch
+    Cursor_MoveTo ch, cl
+    Console_WriteTextWith0 pow_line2
+    Console_ReadTextWith0 pow_numeroString, 1 ; Leer la base ingresada por el usuario
+    Int_Parse pow_numero pow_numeroString 
+    
+    ; L?nea 3: Solicitar el exponente
+    mov ch, rowIndex
+    mov cl, columnIndex
+    add cl, 4
+    add ch, 4
+    Cursor_MoveTo ch, cl
+    Console_WriteTextWith0 pow_line3
+    Console_ReadTextWith0 pow_potenciaString, 1 ; Leer el exponente ingresado
+    Int_Parse pow_potencia pow_potenciaString
+    
+    
+    ; L?nea 4: Mostrar el resultado
+    inc ch
+    Cursor_MoveTo ch, cl
+    Console_WriteTextWith0 pow_resultText
+    
+    ; Calcular la potencia usando Math_Pow
+    mov ax, pow_numero
+    mov cx, pow_potencia
+    Math_Pow ax, cx, pow_result
+    
+    ;Console_WriteTextWith0 pow_result
+    ;Console_ReadTextWith0 pow_result, 1
+
+@END:
+    pop dx
+    pop cx
+    pop bx
+    pop ax
+endm
