@@ -34,8 +34,8 @@ data segment
     ; palindromo
     resultado db 0
     miPalabra db 'laloll', 0   
-    msg_si db 'Si es palindromo$', 0  ; Mensaje si es pal?ndromo
-    msg_no db 'No es palindromo$', 0  ; Mensaje si no es pal?ndromo
+    msg_si db 'Si es palindromo$', 1  ; Mensaje si es pal?ndromo
+    msg_no db 'No es palindromo$', 1  ; Mensaje si no es pal?ndromo
 data ends
  
 code segment
@@ -75,7 +75,16 @@ code segment
     Main proc
         Theme_SetRed
         Cursor_MoveTo 0 0
+        
+        ;Stores the original xPosition, for some reason, Raw_RectangleWithText was modifying it by ref, when it shouldn't happen in first place.
+        mov ah, 0
+        mov al, _1b_xPosition
+        push ax
         Draw_RectangleWithText _1b_xPosition _1b_yPosition _1b_rectangleWidth _1b_rectangleHeigth _arr1b_title _arr2b_optionsarray _1b_left_padding _1b_withNumberedRows _1b_withESCMessage
+        pop ax
+        mov _1b_xPosition, al ;Restoring original
+        
+        
         Console_WriteTextWith0 _arr1b_initialMsg
         call ReadSelectedInput
         
