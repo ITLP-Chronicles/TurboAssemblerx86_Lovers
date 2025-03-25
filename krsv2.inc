@@ -992,7 +992,73 @@ end_count:
     pop si
 endm
 
-
+; Macro to extract a substring from a given string
+; Parameters:
+;   source - The source string (null-terminated)
+;   startIndex - The starting index (0-based)
+;   endIndex - The ending index (0-based, exclusive)
+;   destination - The buffer to store the substring
+Extract_Substring macro source, startIndex, endIndex, destination
+    local @COPY_LOOP, @END_COPY, @TERMINATE
+    push ax
+    push bx
+    push cx
+    push si
+    push di
+    
+    ; Initialize pointers
+    mov si, offset source    ; Source string pointer
+    mov di, offset destination ; Destination buffer pointer
+    
+    ; Check if startIndex is 0
+    mov bl, startIndex
+    cmp bl, 0
+    je @COPY_LOOP            ; If startIndex is 0, start copying
+    
+    ; Skip characters until startIndex
+    xor cx, cx               ; Counter for current position
+@SKIP_LOOP:
+    mov al, [si]
+    cmp al, 0                ; Check for null terminator
+    je @TERMINATE            ; If end of string, terminate
+    
+    inc si                   ; Move to next character
+    inc cx                   ; Increment position counter
+    
+    cmp cl, bl               ; Compare with startIndex
+    jb @SKIP_LOOP            ; If not reached, continue skipping
+    
+@COPY_LOOP:
+    ; Check if we've reached endIndex or end of string
+    mov al, [si]
+    cmp al, 0                ; Check for null terminator
+    je @TERMINATE            ; If end of string, terminate
+    
+    cmp cl, endIndex         ; Compare with endIndex
+    jae @TERMINATE           ; If reached or exceeded, terminate
+    
+    ; Copy the character
+    mov al, [si]
+    mov [di], al
+    
+    ; Increment pointers and counters
+    inc si
+    inc di
+    inc cx
+    
+    jmp @COPY_LOOP
+    
+@TERMINATE:
+    ; Null-terminate the destination string
+    mov byte ptr [di], 0
+    
+@END_COPY:
+    pop di
+    pop si
+    pop cx
+    pop bx
+    pop ax
+endm
 
 Draw_SubstringInput macro rowIndex, columnIndex
     local @END
@@ -1022,7 +1088,6 @@ Draw_SubstringInput macro rowIndex, columnIndex
     Cursor_MoveTo ch, cl
     Console_WriteTextWith0 substring_line2
     ; Move cursor to after "Cadena: " to take input
-    ; "Cadena: " is 8 characters long, so move 8 positions to the right
     add cl, 8
     Cursor_MoveTo ch, cl
     ; Read user input for the string (max 20 characters)
@@ -1035,7 +1100,6 @@ Draw_SubstringInput macro rowIndex, columnIndex
     Cursor_MoveTo ch, cl
     Console_WriteTextWith0 substring_line3
     ; Move cursor to after "Inicio: " to take input
-    ; "Inicio: " is 8 characters long, so move 8 positions to the right
     add cl, 8
     Cursor_MoveTo ch, cl
     ; Read user input for start index (max 2 characters, e.g., "6")
@@ -1048,7 +1112,6 @@ Draw_SubstringInput macro rowIndex, columnIndex
     Cursor_MoveTo ch, cl
     Console_WriteTextWith0 substring_line4
     ; Move cursor to after "T?rmino: " to take input
-    ; "T?rmino: " is 9 characters long, so move 9 positions to the right
     add cl, 9
     Cursor_MoveTo ch, cl
     ; Read user input for end index (max 2 characters, e.g., "8")
@@ -1076,7 +1139,11 @@ Draw_SubstringInput macro rowIndex, columnIndex
     mov bh, al              ; Save end index in bh
     
     ; Extract the substring using the new macro
-    ;Extract_Substring substring_input, bl, bh, substring_result
+    Extract_Substring substring_input, bl, bh, substring_result
+    
+    ; Display the result after "Subcadena = "
+    add cl, 12              ; Move cursor past "Subcadena = "
+    Cursor_MoveTo ch, cl
     Console_WriteTextWith0 substring_result
     
 @END:
