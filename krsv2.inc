@@ -1049,7 +1049,170 @@ Draw_VowelCountInput macro rowIndex, columnIndex
     pop ax
 endm
 
+; Extracts a substring from a null-terminated string
+; @param sourceString | (bytes[]) | The null-terminated source string
+; @param startIndex | (byte) | The starting index (0-based)
+; @param endIndex | (byte) | The ending index (exclusive, 0-based)
+; @param resultString | (bytes[]) | The buffer to store the extracted substring
+; @Destructive | Modifies si, di
+Extract_Substring macro sourceString, startIndex, endIndex, resultString
+    local @COPY_LOOP, @END_COPY, @END
+    
+    push si
+    push di
+    push ax
+    
+    ; Set up pointers
+    mov si, startIndex  ; Start index
+    mov di, 0           ; Index into resultString
+    
+    ; Check if startIndex >= endIndex or startIndex is invalid
+    cmp si, endIndex
+    jge @END  ; If startIndex >= endIndex, return empty string
+    
+    ; Find the length of the source string to avoid overflow
+    mov bx, 0  ; Length counter
+@FIND_LENGTH:
+    cmp sourceString[bx], 0
+    je @LENGTH_DONE
+    inc bx
+    jmp @FIND_LENGTH
+@LENGTH_DONE:
+    ; bx now holds the length of the source string
+    cmp si, bx  ; If startIndex >= length, return empty string
+    jge @END
+    cmp endIndex, bx  ; If endIndex > length, adjust to length
+    jle @START_COPY
+    mov endIndex, bx  ; Adjust endIndex to string length
 
+@START_COPY:
+    ; Copy characters from startIndex to endIndex
+@COPY_LOOP:
+    cmp si, endIndex
+    jge @END_COPY
+    mov al, sourceString[si]  ; Get character from source
+    mov resultString[di], al  ; Copy to result
+    inc si
+    inc di
+    jmp @COPY_LOOP
+
+@END_COPY:
+    mov resultString[di], 0  ; Null-terminate the result string
+
+@END:
+    pop ax
+    pop di
+    pop si
+endm
+
+Draw_SubstringInput macro rowIndex, columnIndex
+    local @END, @COPY_LOOP, @END_COPY
+    push ax
+    push bx
+    push cx
+    push dx
+    push si
+    push di
+    
+    ; Draw the rectangle (width=30, height=8)
+    Draw_Rectangle rowIndex, columnIndex, 30, 8
+    
+    ; Print the text inside the rectangle
+    ; Start at rowIndex + 1, columnIndex + 4 for padding
+    mov ch, rowIndex
+    mov cl, columnIndex
+    inc ch          ; Move 1 row down for top padding
+    add cl, 4       ; Add 4 spaces of padding from left border
+    
+    ; Line 1: "Obtener subcadena"
+    Cursor_MoveTo ch, cl
+    Console_WriteTextWith0 substring_line1
+    
+    ; Line 2: "Cadena: " followed by user input
+    inc ch
+    Cursor_MoveTo ch, cl
+    Console_WriteTextWith0 substring_line2
+    ; Move cursor to after "Cadena: " to take input
+    ; "Cadena: " is 8 characters long, so move 8 positions to the right
+    add cl, 8
+    Cursor_MoveTo ch, cl
+    ; Read user input for the string (max 20 characters)
+    Console_ReadTextWith0 substring_input, 20
+    
+    ; Line 3: "Inicio: " followed by user input
+    inc ch
+    mov cl, columnIndex  ; Reset column
+    add cl, 4
+    Cursor_MoveTo ch, cl
+    Console_WriteTextWith0 substring_line3
+    ; Move cursor to after "Inicio: " to take input
+    ; "Inicio: " is 8 characters long, so move 8 positions to the right
+    add cl, 8
+    Cursor_MoveTo ch, cl
+    ; Read user input for start index (max 2 characters, e.g., "6")
+    Console_ReadTextWith0 start_input, 2
+    
+    ; Line 4: "T?rmino: " followed by user input
+    inc ch
+    mov cl, columnIndex  ; Reset column
+    add cl, 4
+    Cursor_MoveTo ch, cl
+    Console_WriteTextWith0 substring_line4
+    ; Move cursor to after "T?rmino: " to take input
+    ; "T?rmino: " is 9 characters long, so move 9 positions to the right
+    add cl, 9
+    Cursor_MoveTo ch, cl
+    ; Read user input for end index (max 2 characters, e.g., "8")
+    Console_ReadTextWith0 end_input, 2
+    
+    ; Line 5: Blank row (just increment ch)
+    inc ch
+    
+    ; Line 6: Display the substring
+    inc ch
+    mov cl, columnIndex  ; Reset column to left padding
+    add cl, 4
+    Cursor_MoveTo ch, cl
+    Console_WriteTextWith0 substring_line5
+    
+    ; Convert start and end indices from ASCII to numbers
+    ; Start index
+    mov al, start_input[0]  ; Get the first character
+    sub al, '0'             ; Convert ASCII digit to number (e.g., '6' -> 6)
+    mov bl, al              ; Save start index in bl
+    
+    ; End index
+    mov al, end_input[0]    ; Get the first character
+    sub al, '0'             ; Convert ASCII digit to number (e.g., '8' -> 8)
+    mov bh, al              ; Save end index in bh
+    
+    ; Extract the substring from substring_input
+    ; bl = start index, bh = end index
+    mov si, 0               ; Index into substring_input
+    mov di, 0               ; Index into substring_result
+    add si, bx              ; Move si to start index
+    
+@COPY_LOOP:
+    cmp si, bx              ; Check if we've reached the end index
+    jge @END_COPY
+    mov al, substring_input[si]  ; Get character from substring_input
+    mov substring_result[di], al ; Copy to result buffer
+    inc si
+    inc di
+    jmp @COPY_LOOP
+
+@END_COPY:
+    mov substring_result[di], 0  ; Null-terminate the result string
+    Console_WriteTextWith0 substring_result
+    
+@END:
+    pop di
+    pop si
+    pop dx
+    pop cx
+    pop bx
+    pop ax
+endm
 
 
 

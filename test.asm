@@ -32,6 +32,22 @@ data segment
     vowel_input db 16 dup(0)  ; Reserve 16 bytes, initialized to 0
     
     
+    
+; Define the strings (null-terminated) with special characters
+substring_line1 db "Obtener subcadena", 0
+substring_line2 db "Cadena: ", 0
+substring_line3 db "Inicio: ", 0
+substring_line4 db "T", 0A2h, "rmino: ", 0  ; T?rmino (? = 0A2h in code page 437)
+substring_line5 db "Subcadena = ", 0
+
+; Define the input buffers
+substring_input db 21 dup(0)  ; Reserve 21 bytes for the input string (20 chars + null)
+start_input db 3 dup(0)       ; Reserve 3 bytes for start index (2 chars + null)
+end_input db 3 dup(0)         ; Reserve 3 bytes for end index (2 chars + null)
+
+; Define the result buffer (max 15 characters + 1 for null terminator)
+substring_result db 16 dup(0)  ; Reserve 16 bytes for the substring
+    
 data ends
 
 code segment
@@ -46,7 +62,7 @@ code segment
         ;Draw_Menu 0 0 20 10
         ;Console_WriteBlankLine
         
-        Draw_VowelCountInput 10 10
+        Draw_SubstringInput 10 10
         Console_WriteBlankLine
         ;mov al, input_buffer[0]
         ;cmp al, 27
