@@ -624,6 +624,60 @@ Draw_Rectangle macro rowIndex, columnIndex, width, height
     pop ax
 endm
 
+Draw_Menu macro rowIndex, columnIndex
+    local @END
+    push ax
+    push bx
+    push cx
+    push dx
+    
+    ; Draw the rectangle (width=25, height=8)
+    Draw_Rectangle rowIndex, columnIndex, 25, 8
+    
+    ; Print the text inside the rectangle
+    ; Start at rowIndex + 1, columnIndex + 4 for padding
+    mov ch, rowIndex
+    mov cl, columnIndex
+    inc ch          ; Move 1 row down for top padding
+    add cl, 4       ; Add 4 spaces of padding from left border
+    
+    ; Line 1: "Men? de Cadenas"
+    Cursor_MoveTo ch, cl
+    Console_WriteTextWith0 menu_line1
+    
+    ; Line 2: "1. ?Es pal?ndromo?"
+    inc ch
+    Cursor_MoveTo ch, cl
+    Console_WriteTextWith0 menu_line2
+    
+    ; Line 3: "2. N?mero de vocales"
+    inc ch
+    Cursor_MoveTo ch, cl
+    Console_WriteTextWith0 menu_line3
+    
+    ; Line 4: "3. Obtener subcadena"
+    inc ch
+    Cursor_MoveTo ch, cl
+    Console_WriteTextWith0 menu_line4
+    
+    ; Line 5: "4. ?"
+    inc ch
+    Cursor_MoveTo ch, cl
+    Console_WriteTextWith0 menu_line5
+    
+    ; Line 6: "<ESC> Para Salir"
+    inc ch
+    Cursor_MoveTo ch, cl
+    Console_WriteTextWith0 menu_line6
+    
+@END:
+    pop dx
+    pop cx
+    pop bx
+    pop ax
+endm
+; Define the strings (null-terminated) with special characters
+
 
 
 
