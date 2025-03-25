@@ -11,7 +11,9 @@ code segment
         mov ax, data
         mov ds, ax
         ;=== Start Code ===
-        Math_Pow 7 8 pow_result
+        mov ax, 2
+        mov cx, 3
+        Math_Pow 2, 3, pow_result
         Int_ToString pow_result pow_resultText
         Console_WriteTextWith0 pow_resultText
         ;=== End Code ====

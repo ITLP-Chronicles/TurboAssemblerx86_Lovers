@@ -41,10 +41,10 @@ data segment
     pow_line1 db "Calculadora de potencia", 0
     pow_line2 db "Numero: ", 0
     pow_line3 db "Potencia: ", 0
-    pow_numeroString db 1 dup(0)
-    pow_potenciaString db 1 dup(0)
-    pow_numero dw 1 dup(0)
-    pow_potencia dw 1 dup(0)
+    pow_numeroString db 2 dup(0)
+    pow_potenciaString db 2 dup(0)
+    pow_numero dw 2 dup(0)
+    pow_potencia dw 2 dup(0)
     pow_resultText db "Resultado: ", 0
     pow_result dw 6 dup(0)
     pow_resultString db 6 dup(0)   

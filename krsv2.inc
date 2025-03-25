@@ -1208,7 +1208,7 @@ Draw_PowerCalculator macro rowIndex, columnIndex
     inc ch
     Cursor_MoveTo ch, cl
     Console_WriteTextWith0 pow_line2
-    Console_ReadTextWith0 pow_numeroString, 1 ; Leer la base ingresada por el usuario
+    Console_ReadTextWith0 pow_numeroString, 2 ; Leer la base ingresada por el usuario
     Int_Parse pow_numero pow_numeroString 
     
     ; L?nea 3: Solicitar el exponente
@@ -1218,7 +1218,7 @@ Draw_PowerCalculator macro rowIndex, columnIndex
     add ch, 3
     Cursor_MoveTo ch, cl
     Console_WriteTextWith0 pow_line3
-    Console_ReadTextWith0 pow_potenciaString, 1 ; Leer el exponente ingresado
+    Console_ReadTextWith0 pow_potenciaString, 2 ; Leer el exponente ingresado
     Int_Parse pow_potencia pow_potenciaString
     
     
@@ -1231,9 +1231,7 @@ Draw_PowerCalculator macro rowIndex, columnIndex
     Console_WriteTextWith0 pow_resultText
     
     ; Calcular la potencia usando Math_Pow
-    mov ax, pow_numero
-    mov cx, pow_potencia
-    Math_Pow ax, cx, pow_result
+    Math_Pow pow_numero, pow_potencia, pow_result
     
     Int_ToString pow_result pow_resultString
     
