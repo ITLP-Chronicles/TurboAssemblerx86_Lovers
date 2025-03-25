@@ -992,121 +992,10 @@ end_count:
     pop si
 endm
 
-Draw_VowelCountInput macro rowIndex, columnIndex
-    local @END
-    push ax
-    push bx
-    push cx
-    push dx
-    
-    ; Draw the rectangle (width=24, height=6)
-    Draw_Rectangle rowIndex, columnIndex, 24, 6
-    
-    ; Print the text inside the rectangle
-    ; Start at rowIndex + 1, columnIndex + 4 for padding
-    mov ch, rowIndex
-    mov cl, columnIndex
-    inc ch          ; Move 1 row down for top padding
-    add cl, 4       ; Add 4 spaces of padding from left border
-    
-    ; Line 1: "N?mero de vocales"
-    Cursor_MoveTo ch, cl
-    Console_WriteTextWith0 vowel_line1
-    
-    ; Line 2: "Cadena: " followed by user input
-    inc ch
-    Cursor_MoveTo ch, cl
-    Console_WriteTextWith0 vowel_line2
-    ; Move cursor to after "Cadena: " to take input
-    ; "Cadena: " is 8 characters long, so move 8 positions to the right
-    add cl, 8
-    Cursor_MoveTo ch, cl
-    ; Read user input into vowel_input (max 15 characters)
-    Console_ReadTextWith0 vowel_input, 15
-    
-    ; Line 3: Blank row (just increment ch)
-    inc ch
-    
-    ; Line 4: Count vowels and display result
-    inc ch
-    mov cl, columnIndex  ; Reset column to left padding
-    add cl, 4
-    Cursor_MoveTo ch, cl
-    
-    ; Count the vowels in the input
-    Count_Vowels vowel_input
-    ; al now contains the number of vowels
-    ; Convert the number to a string and display it
-    mov bl, al  ; Save the count
-    add bl, '0' ; Convert to ASCII digit (e.g., 4 -> '4')
-    Console_WriteChar bl
-    Console_WriteTextWith0 vowel_line3
-    
-@END:
-    pop dx
-    pop cx
-    pop bx
-    pop ax
-endm
 
-; Extracts a substring from a null-terminated string
-; @param sourceString | (bytes[]) | The null-terminated source string
-; @param startIndex | (byte) | The starting index (0-based)
-; @param endIndex | (byte) | The ending index (exclusive, 0-based)
-; @param resultString | (bytes[]) | The buffer to store the extracted substring
-; @Destructive | Modifies si, di
-Extract_Substring macro sourceString, startIndex, endIndex, resultString
-    local @COPY_LOOP, @END_COPY, @END
-    
-    push si
-    push di
-    push ax
-    
-    ; Set up pointers
-    mov si, startIndex  ; Start index
-    mov di, 0           ; Index into resultString
-    
-    ; Check if startIndex >= endIndex or startIndex is invalid
-    cmp si, endIndex
-    jge @END  ; If startIndex >= endIndex, return empty string
-    
-    ; Find the length of the source string to avoid overflow
-    mov bx, 0  ; Length counter
-@FIND_LENGTH:
-    cmp sourceString[bx], 0
-    je @LENGTH_DONE
-    inc bx
-    jmp @FIND_LENGTH
-@LENGTH_DONE:
-    ; bx now holds the length of the source string
-    cmp si, bx  ; If startIndex >= length, return empty string
-    jge @END
-    cmp endIndex, bx  ; If endIndex > length, adjust to length
-    jle @START_COPY
-    mov endIndex, bx  ; Adjust endIndex to string length
-
-@START_COPY:
-    ; Copy characters from startIndex to endIndex
-@COPY_LOOP:
-    cmp si, endIndex
-    jge @END_COPY
-    mov al, sourceString[si]  ; Get character from source
-    mov resultString[di], al  ; Copy to result
-    inc si
-    inc di
-    jmp @COPY_LOOP
-
-@END_COPY:
-    mov resultString[di], 0  ; Null-terminate the result string
-
-@END:
-    pop ax
-    pop di
-    pop si
-endm
 
 Draw_SubstringInput macro rowIndex, columnIndex
-    local @END, @COPY_LOOP, @END_COPY
+    local @END
     push ax
     push bx
     push cx
@@ -1168,7 +1057,7 @@ Draw_SubstringInput macro rowIndex, columnIndex
     ; Line 5: Blank row (just increment ch)
     inc ch
     
-    ; Line 6: Display the substring
+    ; Line 6: Display the substring (two lines below "T?rmino")
     inc ch
     mov cl, columnIndex  ; Reset column to left padding
     add cl, 4
@@ -1186,23 +1075,8 @@ Draw_SubstringInput macro rowIndex, columnIndex
     sub al, '0'             ; Convert ASCII digit to number (e.g., '8' -> 8)
     mov bh, al              ; Save end index in bh
     
-    ; Extract the substring from substring_input
-    ; bl = start index, bh = end index
-    mov si, 0               ; Index into substring_input
-    mov di, 0               ; Index into substring_result
-    add si, bx              ; Move si to start index
-    
-@COPY_LOOP:
-    cmp si, bx              ; Check if we've reached the end index
-    jge @END_COPY
-    mov al, substring_input[si]  ; Get character from substring_input
-    mov substring_result[di], al ; Copy to result buffer
-    inc si
-    inc di
-    jmp @COPY_LOOP
-
-@END_COPY:
-    mov substring_result[di], 0  ; Null-terminate the result string
+    ; Extract the substring using the new macro
+    ;Extract_Substring substring_input, bl, bh, substring_result
     Console_WriteTextWith0 substring_result
     
 @END:
@@ -1213,12 +1087,3 @@ Draw_SubstringInput macro rowIndex, columnIndex
     pop bx
     pop ax
 endm
-
-
-
-
-
-
-
-
-
