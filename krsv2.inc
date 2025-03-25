@@ -1154,3 +1154,33 @@ Draw_SubstringInput macro rowIndex, columnIndex
     pop bx
     pop ax
 endm
+
+; Clears a rectangle area on the screen by filling it with spaces
+Clear_Rectangle macro rowIndex, columnIndex, width, height
+LOCAL @CLEAR_ROW, @CLEAR_COL
+    push ax
+    push bx
+    push cx
+    push dx
+    
+    mov ch, rowIndex
+    mov cl, columnIndex
+    mov bl, height
+@CLEAR_ROW:
+    Cursor_MoveTo ch, cl
+    mov dl, width
+    mov al, ' '  ; Space character to clear
+@CLEAR_COL:
+    Console_WriteChar al
+    dec dl
+    jnz @CLEAR_COL
+    inc ch
+    dec bl
+    jnz @CLEAR_ROW
+    
+    pop dx
+    pop cx
+    pop bx
+    pop ax
+endm
+
