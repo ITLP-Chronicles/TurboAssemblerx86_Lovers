@@ -1215,7 +1215,7 @@ Draw_PowerCalculator macro rowIndex, columnIndex
     mov ch, rowIndex
     mov cl, columnIndex
     add cl, 4
-    add ch, 4
+    add ch, 3
     Cursor_MoveTo ch, cl
     Console_WriteTextWith0 pow_line3
     Console_ReadTextWith0 pow_potenciaString, 1 ; Leer el exponente ingresado
@@ -1223,7 +1223,10 @@ Draw_PowerCalculator macro rowIndex, columnIndex
     
     
     ; L?nea 4: Mostrar el resultado
-    inc ch
+    mov ch, rowIndex
+    mov cl, columnIndex
+    add cl, 4
+    add ch, 4
     Cursor_MoveTo ch, cl
     Console_WriteTextWith0 pow_resultText
     
@@ -1232,8 +1235,11 @@ Draw_PowerCalculator macro rowIndex, columnIndex
     mov cx, pow_potencia
     Math_Pow ax, cx, pow_result
     
-    ;Console_WriteTextWith0 pow_result
-    ;Console_ReadTextWith0 pow_result, 1
+    Int_ToString pow_result pow_resultString
+    
+    
+    Console_WriteTextWith0 pow_resultString
+    Console_ReadTextWith0 end_input, 1
 
 @END:
     pop dx

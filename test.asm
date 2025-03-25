@@ -46,7 +46,8 @@ data segment
     pow_numero dw 1 dup(0)
     pow_potencia dw 1 dup(0)
     pow_resultText db "Resultado: ", 0
-    pow_result dw 6 dup(0)   
+    pow_result dw 6 dup(0)
+    pow_resultString db 6 dup(0)   
     
     ; Message for unavailable option
     not_available_msg db "Opci", 0A2h, "n no disponible", 0
