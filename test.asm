@@ -23,12 +23,13 @@ data segment
     palindrome_input db 20 dup(0)  ; Reserve 16 bytes, initialized to 0
     
     
-; Define the strings (null-terminated) with special characters
-vowel_line1 db "N", 0A3h, "mero de vocales", 0
-vowel_line2 db "Cadena: ", 0
+    ;================== Vowel Counter ===================
+    vowel_line1 db "N", 0A3h, "mero de vocales", 0
+    vowel_line2 db "Cadena: ", 0
+    vowel_line3 db " vocales", 0
 
-; Define the input buffer (15 characters + 1 for null terminator)
-vowel_input db 16 dup(0)  ; Reserve 16 bytes, initialized to 0
+    ; Define the input buffer (15 characters + 1 for null terminator)
+    vowel_input db 16 dup(0)  ; Reserve 16 bytes, initialized to 0
     
     
 data ends
