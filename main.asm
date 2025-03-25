@@ -1,4 +1,5 @@
 INCLUDE krsv2.inc
+INCLUDE btov1.inc
     
 data segment   
 
@@ -20,7 +21,7 @@ data segment
 
 ; ============ Normal Variables ==============
 
-    _arr1b_rawInput db 20 dup(0)
+    _arr1b_rawInput db 20 dup(0)  
     _1b_selectedOption db 0
     _1b_maxCharsAccepted dw 17
     
@@ -76,18 +77,10 @@ code segment
         Theme_SetRed
         Cursor_MoveTo 0 0
         
-        ;Stores the original xPosition, for some reason, Raw_RectangleWithText was modifying it by ref, when it shouldn't happen in first place.
-        mov ah, 0
-        mov al, _1b_xPosition
-        push ax
-        Draw_RectangleWithText _1b_xPosition _1b_yPosition _1b_rectangleWidth _1b_rectangleHeigth _arr1b_title _arr2b_optionsarray _1b_left_padding _1b_withNumberedRows _1b_withESCMessage
-        pop ax
-        mov _1b_xPosition, al ;Restoring original
         
-        
+         
         Console_WriteTextWith0 _arr1b_initialMsg
         call ReadSelectedInput
-        
         ret
     Main endp
     
@@ -112,7 +105,6 @@ code segment
         Console_WriteBlankLine
         Console_WriteTextWith0 _arr1b_continue
         Console_ReadTextWith0 _arr1b_rawInput, _1b_maxCharsAccepted
-        
         Theme_SetRed
         Cursor_MoveTo 0 0
         
