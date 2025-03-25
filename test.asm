@@ -52,8 +52,9 @@ code segment
         Theme_SetRed
         Draw_Menu 0 0 20 10  ; Draw the menu on the left side (columns 0 to 19)
         Cursor_MoveTo 10, 1  ; Position cursor for input prompt
-        ;Console_WriteTextWith0 input_prompt
-        ;Console_ReadTextWith0 input_buffer, 5  ; Read user input
+        
+        ; Clear the input area to remove the selection
+        Clear_Rectangle 10, 1, 19, 1  ; Clear the input prompt and input
         
         ; Check the input
         mov al, input_buffer[0]
@@ -62,10 +63,12 @@ code segment
         cmp al, 27
         je @EXIT
         
+        ; Clear only the right side of the screen (columns 26 to 79)
+        Clear_Rectangle 0, 26, 54, 23  ; Width is 54 (80-26) to cover right side
+        
         ; Check for option '1' (Palindrome Check)
         cmp al, '1'
         jne @CHECK_OPTION_2
-        Clear_Rectangle 0, 26, 54, 25  ; Clear the right side (columns 26 to 79)
         Draw_PalindromeCheck 0, 26     ; Draw on the right side
         jmp @MAIN
         
@@ -73,7 +76,6 @@ code segment
         ; Check for option '2' (Vowel Count)
         cmp al, '2'
         jne @CHECK_OPTION_3
-        Clear_Rectangle 0, 26, 54, 25
         Draw_VowelCount 0, 26
         jmp @MAIN
         
@@ -81,7 +83,6 @@ code segment
         ; Check for option '3' (Substring Extraction)
         cmp al, '3'
         jne @CHECK_OPTION_4
-        Clear_Rectangle 0, 26, 54, 25
         Draw_SubstringInput 0, 26
         jmp @MAIN
         
