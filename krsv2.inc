@@ -626,6 +626,531 @@ endm
 
 
 
+Draw_Menu macro rowIndex, columnIndex
+    local @END
+    push ax
+    push bx
+    push cx
+    push dx
+    
+    ; Draw the rectangle (width=25, height=9)
+    Draw_Rectangle rowIndex, columnIndex, 25, 9
+    
+    ; Print the text inside the rectangle
+    ; Start at rowIndex + 1, columnIndex + 4 for padding
+    mov ch, rowIndex
+    mov cl, columnIndex
+    inc ch          ; Move 1 row down for top padding
+    add cl, 4       ; Add 4 spaces of padding from left border
+    
+    ; Line 1: "Men? de Cadenas"
+    Cursor_MoveTo ch, cl
+    Console_WriteTextWith0 menu_line1
+    
+    ; Line 2: "1. ?Es pal?ndromo?"
+    inc ch
+    Cursor_MoveTo ch, cl
+    Console_WriteTextWith0 menu_line2
+    
+    ; Line 3: "2. N?mero de vocales"
+    inc ch
+    Cursor_MoveTo ch, cl
+    Console_WriteTextWith0 menu_line3
+    
+    ; Line 4: "3. Obtener subcadena"
+    inc ch
+    Cursor_MoveTo ch, cl
+    Console_WriteTextWith0 menu_line4
+    
+    ; Line 5: "4. ?"
+    inc ch
+    Cursor_MoveTo ch, cl
+    Console_WriteTextWith0 menu_line5
+    
+    ; Line 6: "<ESC> Para Salir"
+    inc ch
+    Cursor_MoveTo ch, cl
+    Console_WriteTextWith0 menu_line6
+    
+    ; Move cursor inside the box for user input
+    ; Last text line is at rowIndex + 6
+    ; Add 1 for the blank row -> rowIndex + 7
+    inc ch          ; Blank row
+    inc ch          ; Input row
+    Cursor_MoveTo ch, cl
+    Console_WriteTextWith0 input_prompt
+    
+    ; Read user input into input_buffer (max 5 characters)
+    ; We'll limit to 5 characters since the input is likely a menu option (e.g., "1", "2", etc.)
+    Console_ReadTextWith0 input_buffer, 5
+    
+@END:
+    pop dx
+    pop cx
+    pop bx
+    pop ax
+endm
 
+; Checks if a null-terminated string is a palindrome
+; @param stringWith0 | (bytes[]) | The null-terminated string to check
+; @returns al | 1 if palindrome, 0 if not palindrome
+; @Destructive | Modifies si, di, cx
+Is_Palindrome macro stringWith0
+    local find_length, compare_loop, is_palindrome, not_palindrome, end_check
+    
+    push bx
+    push cx
+    push si
+    push di
+    
+    ; Step 1: Find the length of the string (excluding the null terminator)
+    mov si, 0
+    mov cx, 0  ; cx will hold the length
+find_length:
+    cmp stringWith0[si], 0  ; Check for null terminator
+    je end_length
+    inc si
+    inc cx
+    jmp find_length
+end_length:
+    ; cx now holds the length of the string
+    ; If length is 0 or 1, it's a palindrome
+    cmp cx, 1
+    jbe is_palindrome  ; If length <= 1, it's a palindrome
+    
+    ; Step 2: Set up pointers for comparison
+    mov si, 0  ; Start pointer (beginning of string)
+    mov di, cx ; End pointer (last character before null terminator)
+    dec di     ; Adjust di to point to the last character
+    
+    ; Step 3: Compare characters from start and end
+compare_loop:
+    cmp si, di  ; If pointers meet or cross, we're done
+    jge is_palindrome  ; If si >= di, all characters matched
+    
+    mov al, stringWith0[si]  ; Get character from start
+    mov bl, stringWith0[di]  ; Get character from end
+    cmp al, bl               ; Compare characters
+    jne not_palindrome       ; If they don't match, not a palindrome
+    
+    inc si  ; Move start pointer forward
+    dec di  ; Move end pointer backward
+    jmp compare_loop
 
+is_palindrome:
+    mov al, 1  ; Set return value to 1 (true)
+    jmp end_check
 
+not_palindrome:
+    mov al, 0  ; Set return value to 0 (false)
+
+end_check:
+    pop di
+    pop si
+    pop cx
+    pop bx
+endm
+
+Draw_PalindromeCheck macro rowIndex, columnIndex
+    local @END, @IS_PALINDROME, @NOT_PALINDROME
+    push ax
+    push bx
+    push cx
+    push dx
+    
+    ; Draw the rectangle (width=23, height=6)
+    Draw_Rectangle rowIndex, columnIndex, 23, 6
+    
+    ; Print the text inside the rectangle
+    ; Start at rowIndex + 1, columnIndex + 4 for padding
+    mov ch, rowIndex
+    mov cl, columnIndex
+    inc ch          ; Move 1 row down for top padding
+    add cl, 4       ; Add 4 spaces of padding from left border
+    
+    ; Line 1: "?Es pal?ndromo?"
+    Cursor_MoveTo ch, cl
+    Console_WriteTextWith0 palindrome_line1
+    
+    ; Line 2: "Cadena: " followed by user input
+    inc ch
+    Cursor_MoveTo ch, cl
+    Console_WriteTextWith0 palindrome_line2
+    ; Move cursor to after "Cadena: " to take input
+    ; "Cadena: " is 8 characters long, so move 8 positions to the right
+    add cl, 8
+    Cursor_MoveTo ch, cl
+    ; Read user input into palindrome_input (max 15 characters)
+    Console_ReadTextWith0 palindrome_input, 15
+    
+    ; Line 3: Blank row (just increment ch)
+    inc ch
+    
+    ; Line 4: Check if the input is a palindrome and display result
+    inc ch
+    mov cl, columnIndex  ; Reset column to left padding
+    add cl, 4
+    Cursor_MoveTo ch, cl
+    
+    ; Check if the input is a palindrome
+    Is_Palindrome palindrome_input
+    cmp al, 1
+    je @IS_PALINDROME
+    
+@NOT_PALINDROME:
+    Console_WriteTextWith0 palindrome_not
+    jmp @END
+
+@IS_PALINDROME:
+    Console_WriteTextWith0 palindrome_yes
+    
+@END:
+    pop dx
+    pop cx
+    pop bx
+    pop ax
+endm
+
+; Counts the number of vowels in a null-terminated string
+; @param stringWith0 | (bytes[]) | The null-terminated string to check
+; @returns al | Number of vowels in the string
+; @Destructive | Modifies si, cx
+Count_Vowels macro stringWith0
+    local check_loop, not_vowel, end_count
+    
+    push si
+    push cx
+    
+    ; Initialize counters
+    mov si, 0  ; Index into the string
+    mov cx, 0  ; Vowel counter
+    
+check_loop:
+    mov al, stringWith0[si]  ; Get the current character
+    cmp al, 0  ; Check for null terminator
+    je end_count  ; If null, we're done
+    
+    ; Check for vowels (both lowercase and accented)
+    ; Code page 437 values:
+    ; a = 0x61, ? = 0xA0
+    ; e = 0x65, ? = 0x82
+    ; i = 0x69, ? = 0xA1
+    ; o = 0x6F, ? = 0xA2
+    ; u = 0x75, ? = 0xA3
+    cmp al, 'a'
+    je is_vowel
+    cmp al, 0A0h  ; ?
+    je is_vowel
+    cmp al, 'e'
+    je is_vowel
+    cmp al, 0x82  ; ?
+    je is_vowel
+    cmp al, 'i'
+    je is_vowel
+    cmp al, 0A1h  ; ?
+    je is_vowel
+    cmp al, 'o'
+    je is_vowel
+    cmp al, 0A2h  ; ?
+    je is_vowel
+    cmp al, 'u'
+    je is_vowel
+    cmp al, 0A3h  ; ?
+    je is_vowel
+    
+    jmp not_vowel  ; Not a vowel, skip to next character
+
+is_vowel:
+    inc cx  ; Increment vowel counter
+
+not_vowel:
+    inc si  ; Move to next character
+    jmp check_loop
+
+end_count:
+    mov al, cl  ; Move the count to al (return value)
+    pop cx
+    pop si
+endm
+
+Draw_VowelCount macro rowIndex, columnIndex
+    local @END
+    push ax
+    push bx
+    push cx
+    push dx
+    
+    ; Draw the rectangle (width=24, height=6)
+    Draw_Rectangle rowIndex, columnIndex, 24, 6
+    
+    ; Print the text inside the rectangle
+    ; Start at rowIndex + 1, columnIndex + 4 for padding
+    mov ch, rowIndex
+    mov cl, columnIndex
+    inc ch          ; Move 1 row down for top padding
+    add cl, 4       ; Add 4 spaces of padding from left border
+    
+    ; Line 1: "N?mero de vocales"
+    Cursor_MoveTo ch, cl
+    Console_WriteTextWith0 vowel_line1
+    
+    ; Line 2: "Cadena: " followed by user input
+    inc ch
+    Cursor_MoveTo ch, cl
+    Console_WriteTextWith0 vowel_line2
+    ; Move cursor to after "Cadena: " to take input
+    ; "Cadena: " is 8 characters long, so move 8 positions to the right
+    add cl, 8
+    Cursor_MoveTo ch, cl
+    ; Read user input into vowel_input (max 15 characters)
+    Console_ReadTextWith0 vowel_input, 15
+    
+    ; Line 3: Blank row (just increment ch)
+    inc ch
+    
+    ; Line 4: Count vowels and display result
+    inc ch
+    mov cl, columnIndex  ; Reset column to left padding
+    add cl, 4
+    Cursor_MoveTo ch, cl
+    
+    ; Count the vowels in the input
+    Count_Vowels vowel_input
+    ; al now contains the number of vowels
+    ; Convert the number to a string and display it
+    mov bl, al  ; Save the count
+    add bl, '0' ; Convert to ASCII digit (e.g., 4 -> '4')
+    Console_WriteChar bl
+    Console_WriteTextWith0 vowel_line3
+    
+@END:
+    pop dx
+    pop cx
+    pop bx
+    pop ax
+endm
+
+; Counts the number of vowels in a null-terminated string
+; @param stringWith0 | (bytes[]) | The null-terminated string to check
+; @returns al | Number of vowels in the string
+; @Destructive | Modifies si, cx
+Count_Vowels macro stringWith0
+    local check_loop, not_vowel, end_count
+    
+    push si
+    push cx
+    
+    ; Initialize counters
+    mov si, 0  ; Index into the string
+    mov cx, 0  ; Vowel counter
+    
+check_loop:
+    mov al, stringWith0[si]  ; Get the current character
+    cmp al, 0  ; Check for null terminator
+    je end_count  ; If null, we're done
+    
+    ; Check for vowels (both lowercase and accented)
+    ; Code page 437 values:
+    ; a = 0x61, ? = 0xA0
+    ; e = 0x65, ? = 0x82
+    ; i = 0x69, ? = 0xA1
+    ; o = 0x6F, ? = 0xA2
+    ; u = 0x75, ? = 0xA3
+    cmp al, 'a'
+    je is_vowel
+    cmp al, 0A0h  ; ?
+    je is_vowel
+    cmp al, 'e'
+    je is_vowel
+    cmp al, 082h  ; ?
+    je is_vowel
+    cmp al, 'i'
+    je is_vowel
+    cmp al, 0A1h  ; ?
+    je is_vowel
+    cmp al, 'o'
+    je is_vowel
+    cmp al, 0A2h  ; ?
+    je is_vowel
+    cmp al, 'u'
+    je is_vowel
+    cmp al, 0A3h  ; ?
+    je is_vowel
+    
+    jmp not_vowel  ; Not a vowel, skip to next character
+
+is_vowel:
+    inc cx  ; Increment vowel counter
+
+not_vowel:
+    inc si  ; Move to next character
+    jmp check_loop
+
+end_count:
+    mov al, cl  ; Move the count to al (return value)
+    pop cx
+    pop si
+endm
+
+; Macro to extract a substring from a given string
+; Parameters:
+;   source - The source string (null-terminated)
+;   startIndex - The starting index (0-based)
+;   endIndex - The ending index (0-based, exclusive)
+;   destination - The buffer to store the substring
+Extract_Substring macro source, startIndex, endIndex, destination
+    local @COPY_LOOP, @END_COPY, @TERMINATE
+    push ax
+    push bx
+    push cx
+    push si
+    push di
+    
+    ; Initialize pointers
+    mov si, offset source    ; Source string pointer
+    mov di, offset destination ; Destination buffer pointer
+    
+    ; Check if startIndex is 0
+    mov bl, startIndex
+    cmp bl, 0
+    je @COPY_LOOP            ; If startIndex is 0, start copying
+    
+    ; Skip characters until startIndex
+    xor cx, cx               ; Counter for current position
+@SKIP_LOOP:
+    mov al, [si]
+    cmp al, 0                ; Check for null terminator
+    je @TERMINATE            ; If end of string, terminate
+    
+    inc si                   ; Move to next character
+    inc cx                   ; Increment position counter
+    
+    cmp cl, bl               ; Compare with startIndex
+    jb @SKIP_LOOP            ; If not reached, continue skipping
+    
+@COPY_LOOP:
+    ; Check if we've reached endIndex or end of string
+    mov al, [si]
+    cmp al, 0                ; Check for null terminator
+    je @TERMINATE            ; If end of string, terminate
+    
+    cmp cl, endIndex         ; Compare with endIndex
+    jae @TERMINATE           ; If reached or exceeded, terminate
+    
+    ; Copy the character
+    mov al, [si]
+    mov [di], al
+    
+    ; Increment pointers and counters
+    inc si
+    inc di
+    inc cx
+    
+    jmp @COPY_LOOP
+    
+@TERMINATE:
+    ; Null-terminate the destination string
+    mov byte ptr [di], 0
+    
+@END_COPY:
+    pop di
+    pop si
+    pop cx
+    pop bx
+    pop ax
+endm
+
+Draw_SubstringInput macro rowIndex, columnIndex
+    local @END
+    push ax
+    push bx
+    push cx
+    push dx
+    push si
+    push di
+    
+    ; Draw the rectangle (width=30, height=8)
+    Draw_Rectangle rowIndex, columnIndex, 30, 8
+    
+    ; Print the text inside the rectangle
+    ; Start at rowIndex + 1, columnIndex + 4 for padding
+    mov ch, rowIndex
+    mov cl, columnIndex
+    inc ch          ; Move 1 row down for top padding
+    add cl, 4       ; Add 4 spaces of padding from left border
+    
+    ; Line 1: "Obtener subcadena"
+    Cursor_MoveTo ch, cl
+    Console_WriteTextWith0 substring_line1
+    
+    ; Line 2: "Cadena: " followed by user input
+    inc ch
+    Cursor_MoveTo ch, cl
+    Console_WriteTextWith0 substring_line2
+    ; Move cursor to after "Cadena: " to take input
+    add cl, 8
+    Cursor_MoveTo ch, cl
+    ; Read user input for the string (max 20 characters)
+    Console_ReadTextWith0 substring_input, 20
+    
+    ; Line 3: "Inicio: " followed by user input
+    inc ch
+    mov cl, columnIndex  ; Reset column
+    add cl, 4
+    Cursor_MoveTo ch, cl
+    Console_WriteTextWith0 substring_line3
+    ; Move cursor to after "Inicio: " to take input
+    add cl, 8
+    Cursor_MoveTo ch, cl
+    ; Read user input for start index (max 2 characters, e.g., "6")
+    Console_ReadTextWith0 start_input, 2
+    
+    ; Line 4: "T?rmino: " followed by user input
+    inc ch
+    mov cl, columnIndex  ; Reset column
+    add cl, 4
+    Cursor_MoveTo ch, cl
+    Console_WriteTextWith0 substring_line4
+    ; Move cursor to after "T?rmino: " to take input
+    add cl, 9
+    Cursor_MoveTo ch, cl
+    ; Read user input for end index (max 2 characters, e.g., "8")
+    Console_ReadTextWith0 end_input, 2
+    
+    ; Line 5: Blank row (just increment ch)
+    inc ch
+    
+    ; Line 6: Display the substring (two lines below "T?rmino")
+    inc ch
+    mov cl, columnIndex  ; Reset column to left padding
+    add cl, 4
+    Cursor_MoveTo ch, cl
+    Console_WriteTextWith0 substring_line5
+    
+    ; Convert start and end indices from ASCII to numbers
+    ; Start index
+    mov al, start_input[0]  ; Get the first character
+    sub al, '0'             ; Convert ASCII digit to number (e.g., '6' -> 6)
+    mov bl, al              ; Save start index in bl
+    
+    ; End index
+    mov al, end_input[0]    ; Get the first character
+    sub al, '0'             ; Convert ASCII digit to number (e.g., '8' -> 8)
+    mov bh, al              ; Save end index in bh
+    
+    ; Extract the substring using the new macro
+    Extract_Substring substring_input, bl, bh, substring_result
+    
+    ; Display the result after "Subcadena = "
+    add cl, 12              ; Move cursor past "Subcadena = "
+    Cursor_MoveTo ch, cl
+    Console_WriteTextWith0 substring_result
+    
+@END:
+    pop di
+    pop si
+    pop dx
+    pop cx
+    pop bx
+    pop ax
+endm
