@@ -34,9 +34,9 @@ data segment
     
     ; palindromo
     resultado db 0
-    miPalabra db 'laloll', 0   
-    msg_si db 'Si es palindromo$', 1  ; Mensaje si es pal?ndromo
-    msg_no db 'No es palindromo$', 1  ; Mensaje si no es pal?ndromo
+    miPalabra db 10 dup(0), 0   
+    msg_si db 'Si es palindromo', 0  ; Mensaje si es pal?ndromo
+    msg_no db 'No es palindromo', 0  ; Mensaje si no es pal?ndromo
 data ends
  
 code segment
@@ -124,6 +124,7 @@ code segment
     ;============ OPTIONS PROCEDURES ==================
     
     Option1Proc proc
+       Console_ReadTextWith0 miPalabra 10
        CheckPalindrome miPalabra, resultado       
                 
        cmp resultado, 1
@@ -131,15 +132,11 @@ code segment
        jmp no_es_palindromo 
 
        es_palindromo:
-           mov ah, 09h         
-           lea dx, msg_si      
-           int 21h             
+           Console_WriteTextWith0 msg_si          
            jmp fin
            
        no_es_palindromo:
-           mov ah, 09h         
-           lea dx, msg_no      
-           int 21h             
+            Console_WriteTextWith0 msg_no              
            
        fin:
        ret
