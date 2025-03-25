@@ -23,6 +23,14 @@ data segment
     palindrome_input db 20 dup(0)  ; Reserve 16 bytes, initialized to 0
     
     
+; Define the strings (null-terminated) with special characters
+vowel_line1 db "N", 0A3h, "mero de vocales", 0
+vowel_line2 db "Cadena: ", 0
+
+; Define the input buffer (15 characters + 1 for null terminator)
+vowel_input db 16 dup(0)  ; Reserve 16 bytes, initialized to 0
+    
+    
 data ends
 
 code segment
@@ -37,7 +45,7 @@ code segment
         ;Draw_Menu 0 0 20 10
         ;Console_WriteBlankLine
         
-        Draw_PalindromeCheck 10 10
+        Draw_VowelCountInput 10 10
         Console_WriteBlankLine
         ;mov al, input_buffer[0]
         ;cmp al, 27

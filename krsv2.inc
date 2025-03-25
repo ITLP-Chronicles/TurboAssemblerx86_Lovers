@@ -811,6 +811,165 @@ Draw_PalindromeCheck macro rowIndex, columnIndex
     pop ax
 endm
 
+; Counts the number of vowels in a null-terminated string
+; @param stringWith0 | (bytes[]) | The null-terminated string to check
+; @returns al | Number of vowels in the string
+; @Destructive | Modifies si, cx
+Count_Vowels macro stringWith0
+    local check_loop, not_vowel, end_count
+    
+    push si
+    push cx
+    
+    ; Initialize counters
+    mov si, 0  ; Index into the string
+    mov cx, 0  ; Vowel counter
+    
+check_loop:
+    mov al, stringWith0[si]  ; Get the current character
+    cmp al, 0  ; Check for null terminator
+    je end_count  ; If null, we're done
+    
+    ; Check for vowels (both lowercase and accented)
+    ; Code page 437 values:
+    ; a = 0x61, ? = 0xA0
+    ; e = 0x65, ? = 0x82
+    ; i = 0x69, ? = 0xA1
+    ; o = 0x6F, ? = 0xA2
+    ; u = 0x75, ? = 0xA3
+    cmp al, 'a'
+    je is_vowel
+    cmp al, 0A0h  ; ?
+    je is_vowel
+    cmp al, 'e'
+    je is_vowel
+    cmp al, 0x82  ; ?
+    je is_vowel
+    cmp al, 'i'
+    je is_vowel
+    cmp al, 0A1h  ; ?
+    je is_vowel
+    cmp al, 'o'
+    je is_vowel
+    cmp al, 0A2h  ; ?
+    je is_vowel
+    cmp al, 'u'
+    je is_vowel
+    cmp al, 0A3h  ; ?
+    je is_vowel
+    
+    jmp not_vowel  ; Not a vowel, skip to next character
+
+is_vowel:
+    inc cx  ; Increment vowel counter
+
+not_vowel:
+    inc si  ; Move to next character
+    jmp check_loop
+
+end_count:
+    mov al, cl  ; Move the count to al (return value)
+    pop cx
+    pop si
+endm
+
+Draw_VowelCount macro rowIndex, columnIndex
+    local @END
+    push ax
+    push bx
+    push cx
+    push dx
+    
+    ; Draw the rectangle (width=24, height=6)
+    Draw_Rectangle rowIndex, columnIndex, 24, 6
+    
+    ; Print the text inside the rectangle
+    ; Start at rowIndex + 1, columnIndex + 4 for padding
+    mov ch, rowIndex
+    mov cl, columnIndex
+    inc ch          ; Move 1 row down for top padding
+    add cl, 4       ; Add 4 spaces of padding from left border
+    
+    ; Line 1: "N?mero de vocales"
+    Cursor_MoveTo ch, cl
+    Console_WriteTextWith0 vowel_line1
+    
+    ; Line 2: "Cadena: " followed by user input
+    inc ch
+    Cursor_MoveTo ch, cl
+    Console_WriteTextWith0 vowel_line2
+    ; Move cursor to after "Cadena: " to take input
+    ; "Cadena: " is 8 characters long, so move 8 positions to the right
+    add cl, 8
+    Cursor_MoveTo ch, cl
+    ; Read user input into vowel_input (max 15 characters)
+    Console_ReadTextWith0 vowel_input, 15
+    
+    ; Line 3: Blank row (just increment ch)
+    inc ch
+    
+    ; Line 4: Count vowels and display result
+    inc ch
+    mov cl, columnIndex  ; Reset column to left padding
+    add cl, 4
+    Cursor_MoveTo ch, cl
+    
+    ; Count the vowels in the input
+    Count_Vowels vowel_input
+    ; al now contains the number of vowels
+    ; Convert the number to a string and display it
+    mov bl, al  ; Save the count
+    add bl, '0' ; Convert to ASCII digit (e.g., 4 -> '4')
+    Console_WriteChar bl
+    Console_WriteTextWith0 vowel_line3
+    
+@END:
+    pop dx
+    pop cx
+    pop bx
+    pop ax
+endm
+
+
+Draw_VowelCountInput macro rowIndex, columnIndex
+    local @END
+    push ax
+    push bx
+    push cx
+    push dx
+    
+    ; Draw the rectangle (width=24, height=6)
+    Draw_Rectangle rowIndex, columnIndex, 24, 6
+    
+    ; Print the text inside the rectangle
+    ; Start at rowIndex + 1, columnIndex + 4 for padding
+    mov ch, rowIndex
+    mov cl, columnIndex
+    inc ch          ; Move 1 row down for top padding
+    add cl, 4       ; Add 4 spaces of padding from left border
+    
+    ; Line 1: "N?mero de vocales"
+    Cursor_MoveTo ch, cl
+    Console_WriteTextWith0 vowel_line1
+    
+    ; Line 2: "Cadena: " followed by user input
+    inc ch
+    Cursor_MoveTo ch, cl
+    Console_WriteTextWith0 vowel_line2
+    ; Move cursor to after "Cadena: " to take input
+    ; "Cadena: " is 8 characters long, so move 8 positions to the right
+    add cl, 8
+    Cursor_MoveTo ch, cl
+    ; Read user input into vowel_input (max 15 characters)
+    Console_ReadTextWith0 vowel_input, 15
+    
+@END:
+    pop dx
+    pop cx
+    pop bx
+    pop ax
+endm
+
 
 
 
