@@ -692,6 +692,54 @@ Draw_Menu macro rowIndex, columnIndex
 endm
 
 
+Draw_PalindromeCheck macro rowIndex, columnIndex
+    local @END
+    push ax
+    push bx
+    push cx
+    push dx
+    
+    ; Draw the rectangle (width=23, height=6)
+    Draw_Rectangle rowIndex, columnIndex, 23, 6
+    
+    ; Print the text inside the rectangle
+    ; Start at rowIndex + 1, columnIndex + 4 for padding
+    mov ch, rowIndex
+    mov cl, columnIndex
+    inc ch          ; Move 1 row down for top padding
+    add cl, 4       ; Add 4 spaces of padding from left border
+    
+    ; Line 1: "?Es pal?ndromo?"
+    Cursor_MoveTo ch, cl
+    Console_WriteTextWith0 palindrome_line1
+    
+    ; Line 2: "Cadena: " followed by user input
+    inc ch
+    Cursor_MoveTo ch, cl
+    Console_WriteTextWith0 palindrome_line2
+    ; Move cursor to after "Cadena: " to take input
+    ; "Cadena: " is 8 characters long, so move 8 positions to the right
+    add cl, 8
+    Cursor_MoveTo ch, cl
+    ; Read user input into palindrome_input (max 15 characters)
+    Console_ReadTextWith0 palindrome_input, 15
+    
+    ; Line 3: Blank row (just increment ch)
+    inc ch
+    
+    ; Line 4: "S? es Pal?ndromo" (hardcoded for now)
+    inc ch
+    mov cl, columnIndex  ; Reset column to left padding
+    add cl, 4
+    Cursor_MoveTo ch, cl
+    Console_WriteTextWith0 palindrome_line3
+    
+@END:
+    pop dx
+    pop cx
+    pop bx
+    pop ax
+endm
 
 
 
