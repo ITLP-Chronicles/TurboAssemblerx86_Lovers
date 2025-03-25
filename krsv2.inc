@@ -803,7 +803,7 @@ Draw_PalindromeCheck macro rowIndex, columnIndex
 
 @IS_PALINDROME:
     Console_WriteTextWith0 palindrome_yes
-
+    
 @END:
     pop dx
     pop cx
