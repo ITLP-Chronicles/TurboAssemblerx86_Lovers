@@ -505,212 +505,6 @@ MacroEnd:
     popa
 endm
 
-; @param xPosition | 1byte |
-; @param yPosition | 1byte |
-; @param width | 1byte |
-; @param heigth | 1byte |
-; @param title | byte[] with 0 terminated |
-; @param string_array_pointers | 2byte[] with 0 separated and 1 terminated |
-; @param padding | 1byte | CSS Concept
-; @param isNumberedMode | 1 byte (boolean) 1 or 0 | 
-
-Draw_RectangleWithText macro xPosition, yPosition, width, heigth, title, string_array_pointers, padding, isNumberedMode
-    LOCAL TopCycle, FromTopToBottomCycle, FromTopToBottomCycleInner, FromTopToBottomEmptySpace, BottomCycle, IsTitleSection, IsTitleBlankLineSection, IsNotTitleSection, EndMacro
-    pusha
-    mov ax, 0
-    mov bx, 0
-    mov cx, 0
-    mov dx, 0
-   
-    ;============= Drawing the top rectangle ==============
-    ;       Variables for this section
-    ; AX free to use
-    ; BX free to use
-    ; DX free to use
-    ; CX free to use
-    ; stack available
-    
-    mov cl, width
-    push cx
-    Cursor_MoveTo xPosition, yPosition
-    Console_WriteChar 0C9h ;Top left corner
-TopCycle:
-    Console_WriteChar 0CDh ;Straight horizonal line
-    dec width
-    cmp width, 0
-jne TopCycle
-    Console_WriteChar 0BBh ;Top right corner
-    pop cx
-    mov width, cl
-    
-    ;============= Drawing now from (top + 1) to (bottom - 1) rectangle ==============
-    mov ah, 0
-    mov al, xPosition ; Store xPosition in DX
-    inc ax ; Advance one row down
-    
-    mov bh, 0
-    mov bl, yPosition ; Store yPosition in DY
-    
-    ;Storing array length in dx using xPosition and stack as temporary storage
-    push ax
-    Get_PointerArray_Length string_array_pointers xPosition
-    mov dh, 0
-    mov dl, xPosition ; Moving 1byte xPosition into 2byte registry size to push it to stack
-    pop ax
-    mov xPosition, al ;Everything backToNormal
-    
-
-  
-    
-    ; ===== inner section: Printing options =======
-    ;       Variables from this section
-    ; AX holds actualrow
-    ; BX holds actualcolumn
-    ; DX has the length of the string array
-    ; CX is used in inner padding cycle...
-    ; Only stack to store variables?... fuck
-    mov si, 0
- 
-    mov ch, 0
-FromTopToBottomCycle: 
- 
-    mov cl, padding
-    Cursor_MoveTo al, bl
-    
-    ;================ Printing both sides ==================
-    ;First printing right side |
-    push bx
-    add bl, 1
-    add bl, width
-    Cursor_MoveTo al, bl
-    Console_WriteChar 0BAh ;Vertical straight line
-    pop bx
-    
-    ;Coming back to left side |
-    Cursor_MoveTo al, bl
-    Console_WriteChar 0BAh ;Vertical straight line
-    ;================ Printing both sides ==================
-    
-    FromTopToBottomCycleInner:  ;Writing padding
-        Console_WriteChar ' '
-        sub cl, 1
-        cmp cl, 0
-    ja FromTopToBottomCycleInner
-    
-     ; ===== inner inner section: Printing title =======
-     ;       Variables from this section same as outer section all used but stack, double fuck
-
-    
-
-    
-     ;Just to index with SI * 2... holly molly
-    ;it's the equivalent to => Console_WriteTextPointerWith0 string_array_pointers[si*2]
-    push si                 ; Save original si
-    push ax                 ; Save original ax
-    push bx                 ; Save bx (we?ll use it temporarily)
-    push dx
-    mov ax, si              ; ax = si (index)
-    mov bx, 2               ; bx = 2 (multiplier)
-    mul bx                  ; ax = si * 2 (offset), dx = 0 (no overflow assumed)
-    mov bx, ax              ; bx = offset
-    mov bx, string_array_pointers[bx]  ; bx = pointer at string_array_pointers[si*2]
-    Console_WriteTextPointerWith0 bx   ; Print the string using bx as the pointer
-    pop dx                  ; Restore dx
-    pop bx                  ; Restore bx
-    pop ax                  ; Restore ax
-    pop si                  ; Restore si
-   
-    inc ch
-    inc xPosition ;IGNORE, it's being as a generic variable, not as "position"....
-    inc si ;Increment indexer of the array of words
-    inc ax ;Increment row
-    dec dx ;decrement the consumed length array
-    cmp dx, 0 ;Check if already ended array of words
-jne FromTopToBottomCycle
-
-
-
-
-
-
-
-    ; ===== inner section: Printing options =======
-    ;       Variables from this section
-    ; AX holds actualrow
-    ; BX holds actualcolumn
-    ; DX free to use
-    ; CX Will be used as constant about how many blank rows there will be in the table
-    ; Stack available
-    mov dx, 0
-    mov cx, 0
-    
-    mov cx, 5 ;CONSTANT VARIABLE: NUMBER OF BLANK ROWS BELOW OPTIONS! I've selected 5 just because
-FromTopToBottomEmptySpace:
-
-    ;================ Printing both sides ==================
-    ;First printing right side |
-    push bx
-    add bl, 1
-    add bl, width
-    Cursor_MoveTo al, bl
-    Console_WriteChar 0BAh ;Vertical straight line
-    pop bx
-    
-    ;Coming back to left side |
-    Cursor_MoveTo al, bl
-    Console_WriteChar 0BAh ;Vertical straight line
-    ;================ Printing both sides ================== 
-    inc ax
-    Cursor_MoveTo al, bl
-    dec cx
-    cmp cx, 0
-ja FromTopToBottomEmptySpace
-
-    ;============= Drawing now the bottom rectangle ==============
-    ;So far, the table has advanced to a new blank line ready to use
-    ;       Variables availables this section
-    ; AX holds actualrow
-    ; BX holds actualcolumn
-    ; DX free to use
-    ; CX free to use
-    ; Stack available
-    
-    Console_WriteChar 0C8h
-    mov ch, 0
-    mov cl, width
-BottomCycle:
-        Console_WriteChar 0CDh
-        dec cl
-        cmp cl, 0
-ja BottomCycle
-    Console_WriteChar 0BCh
-    
-    
-    
-    
-EndMacro:
-    popa
-endm
-
-
-limpiarPartePantalla macro color, esqSupIzq, esqInfDer
-    push ax
-    push bh
-    push cx
-    push dx
-        
-    mov ax, 0600h
-    mov bh, color
-    mov cx, esqSupIzq
-    mov dx, esqInfDer
-    int 10h
-    
-    pop dx
-    pop cx
-    pop bh
-    pop ax
-endm
-
 
 ;Palabra es un arreglo bytes y es la palabra a verificar que sea palindroma
 ;esPalindromo es 1 byte para verificar que lo sea o no
@@ -749,4 +543,89 @@ CheckPalindrome macro palabra, esPalindromo
     fin_macro:
         popa   
 ENDM
+
+; @param x 1 byte
+; @param y 1 byte
+; @param width 1 byte
+; @param heigth 1 byte
+; @free_to_use ax!, bx!
+Draw_Rectangle macro rowIndex, columnIndex, width, height
+    local @TOP, @MIDDLE, @BOTTOM
+    push ax
+    push bx
+    push cx
+    push dx
+    
+    ; Set initial coordinates
+    mov ch, rowIndex    ; Row (y)
+    mov cl, columnIndex ; Column (x)
+    
+    ; Set size
+    mov dh, width       ; Width
+    mov dl, height      ; Height
+    
+    ; Draw top row
+    Cursor_MoveTo ch, cl
+    Console_WriteChar 0C9h  ; ? (top-left corner)
+    
+    ; Draw top horizontal line
+    push dx
+    mov dh, width
+@TOP:
+    Console_WriteChar 0CDh  ; ? (horizontal line)
+    dec dh
+    cmp dh, 0
+    ja @TOP
+    pop dx
+    
+    Console_WriteChar 0BBh  ; ? (top-right corner)
+    
+    ; Draw middle section (vertical lines)
+    push dx
+    mov dl, height
+@MIDDLE:
+    inc ch                  ; Move to next row
+    Cursor_MoveTo ch, cl    ; Left side position
+    Console_WriteChar 0BAh  ; ? (left vertical)
+    
+    mov bl, cl              ; Save original column
+    add cl, width           ; Move to right side
+    add cl ,1
+    Cursor_MoveTo ch, cl    ; Right side position
+    Console_WriteChar 0BAh  ; ? (right vertical)
+    mov cl, bl              ; Restore original column
+    
+    dec dl                  ; Decrease height counter
+    cmp dl, 0
+    ja @MIDDLE
+    pop dx
+    
+    ; Draw bottom row
+    inc ch                  ; Move to bottom row
+    Cursor_MoveTo ch, cl
+    Console_WriteChar 0C8h  ; ? (bottom-left corner)
+    
+    ; Draw bottom horizontal line
+    push dx
+    mov dh, width
+@BOTTOM:
+    Console_WriteChar 0CDh  ; ? (horizontal line)
+    dec dh
+    cmp dh, 0
+    ja @BOTTOM
+    pop dx
+    
+    Console_WriteChar 0BCh  ; ? (bottom-right corner)
+    Console_WriteBlankLine
+    
+    pop dx
+    pop cx
+    pop bx
+    pop ax
+endm
+
+
+
+
+
 
