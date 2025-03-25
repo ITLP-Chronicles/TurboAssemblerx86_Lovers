@@ -624,6 +624,8 @@ Draw_Rectangle macro rowIndex, columnIndex, width, height
     pop ax
 endm
 
+
+
 Draw_Menu macro rowIndex, columnIndex
     local @END
     push ax
@@ -669,6 +671,27 @@ Draw_Menu macro rowIndex, columnIndex
     inc ch
     Cursor_MoveTo ch, cl
     Console_WriteTextWith0 menu_line6
+    
+    ; Move cursor below the menu to get user input
+    ; The menu box starts at rowIndex and has height=8 (plus top/bottom borders)
+    ; So the bottom border is at rowIndex + 8 + 1 = rowIndex + 9
+    ; We'll place the input at rowIndex + 10
+    mov ch, rowIndex
+    mov cl, columnIndex
+    add ch, 10      ; Move to row below the menu box
+    mov cl, columnIndex ; Start at the same column as the menu
+    Cursor_MoveTo ch, cl
+    
+    ; Prompt for input (optional, to guide the user)
+    Console_WriteTextWith0 input_prompt
+    
+    ; Read user input into input_buffer (max 20 characters)
+    Console_ReadTextWith0 input_buffer, 20
+    
+    ; Move to the next line to display the entered text (optional)
+    inc ch
+    Cursor_MoveTo ch, cl
+    Console_WriteTextWith0 input_buffer
     
 @END:
     pop dx
