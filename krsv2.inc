@@ -693,7 +693,7 @@ EndMacro:
 endm
 
 
-limpiarPartePantalla macro color, esqIzq, esqDer
+limpiarPartePantalla macro color, esqSupIzq, esqInfDer
     push ax
     push bh
     push cx
@@ -701,8 +701,8 @@ limpiarPartePantalla macro color, esqIzq, esqDer
         
     mov ax, 0600h
     mov bh, color
-    mov cx, esqIzq
-    mov dx, esqDer
+    mov cx, esqSupIzq
+    mov dx, esqInfDer
     int 10h
     
     pop dx
