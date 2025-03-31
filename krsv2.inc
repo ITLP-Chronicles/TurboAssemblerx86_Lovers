@@ -1187,3 +1187,145 @@ LOCAL @CLEAR_ROW, @CLEAR_COL
     pop ax
 endm
 
+;==================== UNIDAD 3 ========================
+;               File handling and IO
+;@param fileName array 1 bytes
+;@param handleOrZero (2bytes)
+;@returns the handler (file opened) or 0 if error
+;@returns in AH if error the following codes:
+;             03H = ruta no encontrada
+;             04H = no hay una handle disponible
+;             05H = acceso denegado
+File_Create macro fileName, handlerOrZero
+    local @ERROR, @FIN
+    push cx
+    push dx
+    
+    mov ah, 3ch
+    mov cx, 0
+    lea dx, fileName
+    int 21h 
+        
+    mov handlerOrZero, ax
+    jc @ERROR ;This uses carry flag! (if 0, no error, if 1, there was error)
+    jmp @FIN
+        
+    @ERROR:
+      mov handlerOrZero, 0
+      jmp @FIN
+   @FIN:
+      ;End Code
+   pop dx
+   pop cx
+endm
+
+; @param fileName byte[]
+; @param handleOrZero DoubleByte (2bytes)
+; @param openMode used directly (2bytes? or 1byte?)
+;       0 =  read only
+;       1 =  write only
+;       2 =  read & write
+; @returns in AH registry IF ERROR
+;       02H = no se encontr? el archivo
+;       03H = no se encontr? la ruta
+;       04H = no hay handle disponible
+;       05H = acceso denegado
+File_Open macro fileName, handlerOrZero, openMode
+    local @ERROR, @EXITO, @FIN
+      push dx
+      mov ah, 3DH
+      mov al, openMode
+      lea dx, fileName
+      int 21h 
+        
+      mov handlerOrZero, ax ;Stores the handler
+      ;This uses carry flag! (if 0, no error, if 1, there was error)
+      jc @ERROR 
+      jmp @FIN
+    @ERROR:
+      mov handlerOrZero, 0
+      jmp @FIN
+@FIN:
+      ;End Code
+      pop dx
+endm
+
+; @param handlerFileToClose | DoubleByte (2bytes variable)
+; @param success | byte
+; @returns If error AH will have the following:
+;    06H = handle no v?lido
+File_Close macro handlerFileToClose, success
+    local @ERROR, @SUCCESS, @END
+    pusha
+    mov ah, 03Eh
+    mov bx, handlerFileToClose
+    int 21h
+    mov handlerFileToClose, ax
+    jc @ERROR
+    jmp @SUCCESS
+@ERROR:
+    mov success, 0
+    jmp @END
+@SUCCESS:
+    mov success, 1
+    jmp @END
+@END:
+    popa
+endm
+
+; @param handler | 2byte | Provided by File_Open and File_Create
+; @param quantityBytesToWrite | 1 byte | 
+; @param textToWrite | (1 byte)[] | Variable str to write into file
+; @returns IF error AH will have the following:
+;       05H = acceso denegado
+;       06H = handle no v?lido
+File_Write macro handler, quantityBytesToWrite, textToWrite
+    local @ERROR, @SUCCESS, @END
+    push ax
+    push bx
+    push cx
+    push dx
+    
+    mov ah, 040h
+    mov bx, handler
+    mov cx, quantityBytesToWrite
+    lea dx, textToWrite
+
+    jc @ERROR
+@SUCCESS:
+    mov success, 1
+    jmp @END
+@END:
+    pop dx
+    pop cx
+    pop bx
+    ;Keep in ah the error code
+endm
+
+; @param handleFile | 2bytes | Provided by File_Write and/or File_Open
+; @param numberOfBytesToRead | 2bytes
+; @param emptyStrArrayToStore | byte[] | Variable to store the read text
+; @param success | 1byte 
+; @param returns error code in AH
+;                            .............
+
+File_Read macro handleFile, numberOfBytesToRead, emptyStrArrayToStore, success
+    local @ERROR, @SUCCESS, @END
+    pusha
+    mov ah, 03Fh
+    mov bx, handleFile
+    mov cx, numberOfbytesToRead
+    lea dx, emptyStrArrayToStore
+    int 21h
+    jc @ERROR
+    jmp @SUCCESS
+    
+@ERROR:
+    mov success, 1
+    jmp @END
+@SUCCESS:
+    mov success, 0
+    jmp @END
+@END:
+    popa
+endm
