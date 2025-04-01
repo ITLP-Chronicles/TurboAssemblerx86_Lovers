@@ -11,7 +11,7 @@ data segment
     bytesToRead  dw 50                  ; Max bytes we want to try reading
     bytesRead    dw 0                   ; To store actual bytes read from file
     readBuffer   db 100 dup(0)          ; Buffer to store read text, initialized to 0
-                                        ; Ensure size >= bytesToRead + 1 for null terminator
+    ; Ensure size >= bytesToRead + 1 for null terminator
 
     numStr      db 7 dup(0)             ; Buffer for Int_ToString conversion (6 digits + null)
 

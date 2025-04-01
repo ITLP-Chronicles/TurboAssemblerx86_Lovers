@@ -1418,11 +1418,28 @@ File_Read macro fileHandle, bytesToRead, buffer
     ; AX and Flags remain untouched and hold the actual result from int 21h
 endm
 
-
-
-
-
-
+; @param typeOfMove - 1 byte 
+;   00h - Start at the beginning of the file
+;   01h - Start from its actual position of the file
+;   02h - Start at the end of the file
+; @param fileHandle - 2bytes (word) Handler of the file opened
+;
+;                To set its coords, its a number of 4 bytes of size! (2 registries of 2bytes)
+; @param movePointerDistance_HIGH - 2bytes
+; @param movePointerDistance_LOW - 2bytes
+; @returns CF registry on 0 if no errors, otherwise 1
+; @returns DX actualPointerCoords_HIGH
+; @returns AX actualPointerCoords_LOW
+; NOTE: if CF is 1 (there is error), then ax stores the error code
+; @destructive ax, bx, cx, dx
+File_MovePointerInside macro typeOfMove, fileHandle, movePointerDistance_HIGH, movePointerDistance_LOW
+    mov ah, 42h
+    mov al, 02h
+    mov bx, fileHandle
+    mov cx, movePointerDistance_HIGH
+    mov dx, movePointerDistance_LOW
+    int 21h
+endm
 
 
 
