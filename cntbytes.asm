@@ -4,6 +4,9 @@ data segment
     msg db 'Son ',0
     msg_end db ' bytes dentro del archivo: ', 0
     msg_end_end db '.', 0
+    msg_contents db 'Contenido: ',10, 13, 0
+    
+    msg_error_length db 'Ha ocurrido un error al leer su longitud',0
     
     doesntExist_msg db 'El archivo: ', 0
     doesntExist_msg_end db ' no existe...', 0
@@ -13,7 +16,7 @@ data segment
     fileNameInputBuffer db 30 dup(0)
     fileHandler dw 0
     fileSizeHigh dw 0
-    fileSizeLow dw 15
+    fileSizeLow dw 0
 data ends
 
 code segment
@@ -37,13 +40,22 @@ code segment
         
         jmp @APP_END
     @CORRECT:
-        File_GetSize fileHandler,fileSizeHigh,fileSizeLow
+        Console_WriteBlankLine
+        Console_WriteTextWith0 msg_contents
+        File_DisplayContents fileHandler
+        
+        Console_WriteBlankLine
+        Console_WriteBlankLine
+        File_GetSize fileHandler,fileSizeLow,fileSizeHigh
+        jc @BAD_LENGTH_ERROR
         Int_ToString fileSizeLow,numberStr
         Console_WriteTextWith0 msg
         Console_WriteTextWith0 numberStr
         Console_WriteTextWith0 msg_end
-        
         jmp @APP_END
+        
+    @BAD_LENGTH_ERROR:
+        Console_WriteTextWith0 msg_error_length
     @APP_END:
         ;=== End Code ====
         App_Exit

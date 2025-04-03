@@ -1504,7 +1504,6 @@ File_GetSize macro fileHandle, sizeLow, sizeHigh
     mov sizeLow, ax  ; Store low word of size
     mov sizeHigh, dx ; Store high word of size
     jmp @ENDMACRO
-    
 @ERROR:
     mov sizeLow, -1
     mov sizeHigh, -1
@@ -1515,7 +1514,33 @@ File_GetSize macro fileHandle, sizeLow, sizeHigh
 endm
 
 
-
-
-
-
+; Macro: File_DisplayContents
+; Displays file contents char by char using only library macros
+; @param fileHandle - File handler (word)
+File_DisplayContents macro fileHandle
+    local @read_loop, @end_read
+    pusha
+    
+    ; Initialize file pointer to start
+    File_MovePointerInside 0, fileHandle, 0, 0  ; Move to start
+    
+@read_loop:
+    ; Use a temporary register to pass the address
+    push ax                ; Save AX and create space on stack
+    mov si, sp             ; SI points to stack location
+    File_Read fileHandle, 1, ss:[si]  ; Read 1 byte to stack
+    
+    jc @end_read           ; Exit on error
+    cmp ax, 0              ; Check if EOF
+    je @end_read
+    
+    ; Display the character
+    pop ax                 ; Get character in AL
+    Console_WriteChar al   ; Display it
+    
+    jmp @read_loop
+    
+@end_read:
+    add sp, 2              ; Clean up stack
+    popa
+endm
