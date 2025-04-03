@@ -1306,37 +1306,21 @@ endm
 
 ; File_Close macro - Closes an open file handle
 ; @param handlerFileToClose - Word variable containing file handle (2 bytes)
-; @param success - Byte variable to store operation result (output)
-; @returns in success:
-;       - 1 if file closed successfully
-;       - 0 if error occurred
+; @returns carry flag:
+;       - CF = 0 if file closed successfully
+;       - CF = 1 if error occurred
 ; @returns in AH if error:
 ;       - 06h = invalid handle
-File_Close macro handlerFileToClose, success
-    local @ERROR, @SUCCESS, @END
-    
-    push bx          ; Preserve only necessary registers
-    push ax
+; @preserves: All registers except those modified by int 21h (AX, BX)
+File_Close macro handlerFileToClose
+    push bx          ; Preserve BX (used for file handle)
     
     mov ah, 3Eh      ; DOS function: Close file
     mov bx, handlerFileToClose  ; Load file handle
     int 21h          ; DOS interrupt
+    ; CF is set by int 21h: 0 = success, 1 = error (AH = error code)
     
-    jc @ERROR        ; Jump if carry flag set (error occurred)
-    
-    @SUCCESS:
-    mov success, 1   ; Set success flag
-    clc             ; Clear carry flag
-    jmp @END
-    
-    @ERROR:
-    mov success, 0   ; Set failure flag
-    ; AH contains error code (06h for invalid handle)
-    
-    @END:
-    ; Don't modify handlerFileToClose value
-    pop ax
-    pop bx          ; Restore registers
+    pop bx           ; Restore BX
 endm
 
 ; File_Write macro - Writes data to an open file
@@ -1418,28 +1402,118 @@ File_Read macro fileHandle, bytesToRead, buffer
     ; AX and Flags remain untouched and hold the actual result from int 21h
 endm
 
+; Corrected File_MovePointerInside macro
+; Moves the file pointer to a specified position based on typeOfMove
 ; @param typeOfMove - 1 byte 
 ;   00h - Start at the beginning of the file
-;   01h - Start from its actual position of the file
+;   01h - Start from current position
 ;   02h - Start at the end of the file
-; @param fileHandle - 2bytes (word) Handler of the file opened
-;
-;                To set its coords, its a number of 4 bytes of size! (2 registries of 2bytes)
-; @param movePointerDistance_HIGH - 2bytes
-; @param movePointerDistance_LOW - 2bytes
-; @returns CF registry on 0 if no errors, otherwise 1
-; @returns DX actualPointerCoords_HIGH
-; @returns AX actualPointerCoords_LOW
-; NOTE: if CF is 1 (there is error), then ax stores the error code
+; @param fileHandle - 2 bytes (word) Handler of the opened file
+; @param movePointerDistance_HIGH - 2 bytes (high word of 32-bit offset)
+; @param movePointerDistance_LOW - 2 bytes (low word of 32-bit offset)
+; @returns CF - 0 if no errors, 1 if error
+; @returns DX - High word of new pointer position
+; @returns AX - Low word of new pointer position
+; @note If CF=1, AX contains the error code (e.g., 06h = invalid handle)
 ; @destructive ax, bx, cx, dx
 File_MovePointerInside macro typeOfMove, fileHandle, movePointerDistance_HIGH, movePointerDistance_LOW
-    mov ah, 42h
-    mov al, 02h
-    mov bx, fileHandle
-    mov cx, movePointerDistance_HIGH
-    mov dx, movePointerDistance_LOW
-    int 21h
+    mov ah, 42h                    ; DOS function: Move file pointer
+    mov al, typeOfMove             ; Use the provided typeOfMove (00h, 01h, or 02h)
+    mov bx, fileHandle             ; File handle
+    mov cx, movePointerDistance_HIGH ; High word of offset
+    mov dx, movePointerDistance_LOW  ; Low word of offset
+    int 21h                        ; DOS interrupt
 endm
+
+
+; File_Append macro - Appends data to the end of an open file
+; @param fileHandle - Word (2 bytes) file handle from File_Open or File_Create
+; @param bytesToWrite - Word (2 bytes) number of bytes to write
+; @param dataPtr - Pointer to byte array containing data to append
+; @param result - Word (2 bytes) variable to store bytes written or error code (output)
+; @returns in result:
+;   - Number of bytes written if successful (matches bytesToWrite)
+;   - 0 if move to end failed, or partial bytes written if write failed
+; @returns carry flag:
+;   - Cleared on success
+;   - Set on error (check AH for code: 05h = access denied, 06h = invalid handle)
+; @preserves: BX, CX, DX (original values restored after execution)
+File_Append macro fileHandle, bytesToWrite, dataPtr, result
+    local @MOVE_ERROR, @WRITE_ERROR, @SUCCESS, @END
+    
+    push bx
+    push cx
+    push dx
+    
+    ; Step 1: Move pointer to end of file using File_MovePointerInside
+    File_MovePointerInside 02h, fileHandle, 0, 0  ; 02h = end of file, offset = 0
+    jc @MOVE_ERROR                                ; Jump if error moving pointer
+    
+    ; Step 2: Write data at the end
+    mov ah, 40h                 ; DOS function: Write to file/device
+    mov bx, fileHandle          ; File handle
+    mov cx, bytesToWrite        ; Bytes to write
+    lea dx, dataPtr             ; Address of data
+    int 21h                     ; Execute write
+    jc @WRITE_ERROR             ; Jump if error writing
+    cmp ax, cx                  ; Verify all bytes written
+    jne @WRITE_ERROR            ; Partial write is an error
+    
+@SUCCESS:
+    mov result, ax              ; Store bytes written in result
+    clc                         ; Clear carry flag for success
+    jmp @END
+    
+@MOVE_ERROR:
+    mov result, 0               ; Set result to 0 on move error
+    jmp @END                    ; Carry flag already set by int 21h
+    
+@WRITE_ERROR:
+    mov result, ax              ; Store partial bytes or 0 on write error
+    ; Carry flag already set by int 21h or cmp/jne
+    
+@END:
+    pop dx
+    pop cx
+    pop bx                      ; Restore registers
+endm
+
+; File_GetSize macro - Returns the size of an open file in bytes
+; @param fileHandle - Word (2 bytes) file handle from File_Open or File_Create
+; @param sizeLow - Word (2 bytes) variable to store the low word of the file size (output)
+; @param sizeHigh - Word (2 bytes) variable to store the high word of the file size (output)
+; @returns carry flag:
+;       - CF = 0 if successful
+;       - CF = 1 if error occurred (e.g., invalid handle)
+; @returns in sizeLow:
+;       - Low word (bits 0-15) of the file size if successful
+; @returns in sizeHigh:
+;       - High word (bits 16-31) of the file size if successful
+; @note If CF=1, AX contains the error code (e.g., 06h = invalid handle)
+; @preserves: BX (restored after execution)
+; @destructive: AX, CX, DX (modified by int 21h via File_MovePointerInside)
+File_GetSize macro fileHandle, sizeLow, sizeHigh
+    push bx          ; Preserve BX
+    
+    ; Move pointer to end of file to get size
+    File_MovePointerInside 02h, fileHandle, 0, 0
+    ; 02h = move relative to end, offset 0:0
+    ; Returns DX:AX = file size, CF = 0 on success, CF = 1 on error
+    
+    jc @ERROR        ; Skip storing if error occurred
+    mov sizeLow, ax  ; Store low word of size
+    mov sizeHigh, dx ; Store high word of size
+    jmp @ENDMACRO
+    
+@ERROR:
+    mov sizeLow, -1
+    mov sizeHigh, -1
+    
+@ENDMACRO:
+    ; CF remains set/cleared from File_MovePointerInside
+    pop bx           ; Restore BX
+endm
+
 
 
 

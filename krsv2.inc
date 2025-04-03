@@ -1478,6 +1478,41 @@ File_Append macro fileHandle, bytesToWrite, dataPtr, result
     pop bx                      ; Restore registers
 endm
 
+; File_GetSize macro - Returns the size of an open file in bytes
+; @param fileHandle - Word (2 bytes) file handle from File_Open or File_Create
+; @param sizeLow - Word (2 bytes) variable to store the low word of the file size (output)
+; @param sizeHigh - Word (2 bytes) variable to store the high word of the file size (output)
+; @returns carry flag:
+;       - CF = 0 if successful
+;       - CF = 1 if error occurred (e.g., invalid handle)
+; @returns in sizeLow:
+;       - Low word (bits 0-15) of the file size if successful
+; @returns in sizeHigh:
+;       - High word (bits 16-31) of the file size if successful
+; @note If CF=1, AX contains the error code (e.g., 06h = invalid handle)
+; @preserves: BX (restored after execution)
+; @destructive: AX, CX, DX (modified by int 21h via File_MovePointerInside)
+File_GetSize macro fileHandle, sizeLow, sizeHigh
+    push bx          ; Preserve BX
+    
+    ; Move pointer to end of file to get size
+    File_MovePointerInside 02h, fileHandle, 0, 0
+    ; 02h = move relative to end, offset 0:0
+    ; Returns DX:AX = file size, CF = 0 on success, CF = 1 on error
+    
+    jc @ERROR        ; Skip storing if error occurred
+    mov sizeLow, ax  ; Store low word of size
+    mov sizeHigh, dx ; Store high word of size
+    jmp @ENDMACRO
+    
+@ERROR:
+    mov sizeLow, -1
+    mov sizeHigh, -1
+    
+@ENDMACRO:
+    ; CF remains set/cleared from File_MovePointerInside
+    pop bx           ; Restore BX
+endm
 
 
 
