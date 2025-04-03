@@ -39,6 +39,7 @@ code segment
         
         File_Open filename,fileHandler, 1 ;Only write
         String_Len inputBuffer,fileTextLength
+        ;File_MovePointerInside 02h,fileHandler,0,0
         File_Write fileHandler,fileTextLength,inputBuffer,successFlagWord
         File_Close fileHandler,successFlagByte
         
