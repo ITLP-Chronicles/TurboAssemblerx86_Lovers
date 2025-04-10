@@ -33,11 +33,31 @@ code segment
         ;=== Start Code ===
         
         ;=== End Code ====
-        App_Exit
+        mov ax, 4C00h
+        int 21h
 code ends
 end start
 ;=========== End Template ================
 
+;================ Template IMPROVED V3 ================
+INCLUDE krsv2.inc
+.model SMALL
+.386
+.STACK 100h
+.data
+    pi dd 3.14
+.code
+start:
+        mov ax, @data
+        mov ds, ax
+        ;=== Start Code ===
+        mov eax, dword ptr [pi]
+        
+        ;=== End Code ====
+        App_Exit
+
+end start
+;================ END Template IMPROVED V3 ================
 
 
 ;========= Style ===========

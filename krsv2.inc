@@ -1544,3 +1544,38 @@ File_DisplayContents macro fileHandle
     add sp, 2              ; Clean up stack
     popa
 endm
+
+
+; ========================= EXPO LUNA (FADD, FSUB, FMUL, FDIV) ==========================
+
+; @param valor | dd (double word) 32 bits number |
+; @param cadFloat | byte[] (array of ASCII code)
+Float_ToString macro valor, cadFloat
+    local positivo, menor, sigue, fin
+    pusha
+    mov signo,0 ;Needs a value for sign byte iguess
+    fld valor
+    fist entero ;loadthefirstitem ST(0) as integer in that memory address
+    test entero, 80000000h ;Check if it's positive 0 if positive, 1 otherwise (negative)
+    jz positivo
+    mov signo,1
+    neg entero
+    fmul negativo
+positivo:
+    ficom entero ;float as integer compare ST(0) with "entero" variable! 
+    
+    ;=== How to pass all registry flags from FPU TO CPU ===
+    fstsw ax ;Copy all flags from FPU to AX registry (due to FPU flags by comparison is totally isolated from cpu normal flags)
+    fwait ;Wait until coprocessor moves all the flags (they work concurrently apparently)
+    sahf ;Uses AH implicitly and use it to load into cpu nnormal flags.
+    ;=== End
+    
+    jb menor
+    jmp sigue
+menor:
+    fild entero
+    fsub uno
+        
+endm
+
+
